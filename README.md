@@ -25,20 +25,72 @@ npx roster-cli audit <dir>
 
 ## Usage
 
+roster is one binary with three commands: `audit`, `doccheck`, and `usage`.
+
 ```sh
 roster audit <dir>
 roster audit <dir> --user
 roster audit <dir> --repo owner/name
 roster audit <dir> --html report.html
+roster audit --plugin --enabled-only
+roster doccheck README.md
+roster usage --days 14 --user
 ```
 
-Full flag surface:
+Full flag surface for `audit`:
 
 ```
 roster audit <dir> [--json] [--html <out>] [--user] [--plugin [name]]
-                    [--repo <owner/name[@ref]>] [--top <n>]
+                    [--enabled-only] [--repo <owner/name[@ref]>] [--top <n>]
                     [--fail-above <s>] [--no-fail]
 ```
+
+`--enabled-only` (with `--plugin`) restricts the plugin-cache source to entries
+active for the current project.[^enabled-only]
+
+[^enabled-only]: Activation is judged purely by installation **scope**
+    (user-scope entries are always active; local/project-scope entries are
+    active only when the cwd is inside the pinning project). It does not read
+    per-project enable/disable state from `settings.json`.
+
+## doccheck
+
+```sh
+roster doccheck README.md
+roster doccheck docs/
+roster doccheck            # defaults to README.md + docs/**/*.md
+```
+
+Scans fenced `sh`/`bash`/`shell` code blocks in markdown docs for commands
+that would fail if a reader copy-pasted them: dead relative paths, missing
+`npm run <script>` scripts, and scripts that exist on disk but lack the
+executable bit.
+
+To keep false positives at zero, it skips anything it can't verify cheaply:
+absolute paths (`/plugin ...`), `npx ...` invocations, and bare global
+binaries (`node`, `git`, ...) with no path separator.
+
+Exits `1` if any finding is reported, `0` otherwise (`--json` for machine-
+readable output).
+
+## usage
+
+```sh
+roster usage
+roster usage --days 14
+roster usage --user
+roster usage --plugin --json
+```
+
+Aggregates how often each `subagent_type` was invoked (via the Agent/Task
+tool) across Claude Code transcript files under `~/.claude` (override with
+`ROSTER_CLAUDE_DIR`), within the last `--days` (default `30`).
+
+Joining with `--user` and/or `--plugin` also reports:
+- **unused** — agents present in the roster with zero observed invocations
+- **ghosts** — invoked `subagent_type` values that don't match any roster agent
+
+Always exits `0` — this is a reporting tool, not a gate.
 
 ## Rules
 
@@ -55,11 +107,21 @@ roster audit <dir> [--json] [--html <out>] [--user] [--plugin [name]]
 `roster audit --repo` run against well-known public agent rosters (SHA-pinned,
 reproducible via `scripts/bench.sh`). Full reports: `docs/benchmarks/`.
 
-| roster | agents | top overlap pair (score) | no-tools % | fixed cost (est. tokens/turn) |
+A weekly cron re-runs the benchmark suite against each roster's latest
+upstream HEAD and opens a refresh PR with any changes.[^leaderboard-cron]
+
+<!-- bench:start -->
+| Repo | Agents | Top overlap pair | No-tools % | Fixed cost |
 | --- | --- | --- | --- | --- |
-| [msitarzewski/agency-agents](./docs/benchmarks/msitarzewski--agency-agents.md) | 277 | Backend Architect ↔ Backend Architect (0.878) | 93.9% | ~14024 |
-| [wshobson/agents](./docs/benchmarks/wshobson--agents.md) | 691 | api-scaffolding-backend-architect ↔ backend-api-security-backend-architect (1.000) | 97.8% | ~24853 |
-| [contains-studio/agents](./docs/benchmarks/contains-studio--agents.md) | 37 | content-creator ↔ instagram-curator (0.565) | 16.2% | ~8421 |
+| [contains-studio/agents](https://github.com/contains-studio/agents) | 37 | content-creator <-> instagram-curator (0.565) | 16.2% | ~8421 tokens/turn |
+| [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents) | 277 | Backend Architect <-> Backend Architect (0.878) | 93.9% | ~14024 tokens/turn |
+| [wshobson/agents](https://github.com/wshobson/agents) | 691 | api-scaffolding-backend-architect <-> backend-api-security-backend-architect (1.000) | 97.8% | ~24853 tokens/turn |
+<!-- bench:end -->
+
+[^leaderboard-cron]: Runs every Monday via `.github/workflows/leaderboard.yml`.
+    GitHub automatically disables scheduled workflows after 60 days of repo
+    inactivity — re-enable with a manual `workflow_dispatch` run if that
+    happens.
 
 Several top pairs score at or near 1.000 similarity (e.g. wshobson/agents has
 five pairs at a perfect 1.000) — these are near-duplicate agent files (same
@@ -87,12 +149,16 @@ Once installed:
   move / merge / rename / uninstall / narrow tools), asks you to approve each
   destructive step, executes only what you approved, then re-audits and
   reports the delta.
-- **`roster-drift.sh` hook** (`SessionStart`) — on each session, diffs
-  `.claude/agents/` against a cached snapshot and emits a short advisory if
-  agents were added/removed/changed (`ROSTER_DRIFT_DISABLE=1` to opt out).
-  The advisory goes to both Claude's session context (so it can offer an
-  audit proactively) and stderr (so you see it in the terminal). Advisory
-  only — never blocks a session.
+- **`roster-drift.sh` hook** (`SessionStart`) — on each session, diffs the
+  watched agent-md dir(s) against a cached snapshot and emits a short
+  advisory if agents were added/removed/changed
+  (`ROSTER_DRIFT_DISABLE=1` to opt out). By default it watches
+  `.claude/agents` plus, in a plugin-layout repo (one with a top-level
+  `.claude-plugin/plugin.json`), the root `agents/` dir; override with
+  `ROSTER_DRIFT_DIR` (colon-separated dir list). The advisory goes to both
+  Claude's session context (so it can offer an audit proactively) and
+  stderr (so you see it in the terminal). Advisory only — never blocks a
+  session.
 
 ## Contributing
 

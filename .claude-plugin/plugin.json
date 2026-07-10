@@ -1,0 +1,21 @@
+{
+  "name": "roster",
+  "version": "0.1.0",
+  "description": "Static auditor for Claude Code agent rosters — overlap, harness gaps, routing, cost — with a resident drift guard.",
+  "author": {
+    "name": "roster contributors"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/roster-drift.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

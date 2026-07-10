@@ -65,6 +65,28 @@ Several top pairs score at or near 1.000 similarity (e.g. wshobson/agents has
 five pairs at a perfect 1.000) — these are near-duplicate agent files (same
 description/body reused across roles), not incidental topic overlap.
 
+## Use as a Claude Code plugin
+
+roster also ships as a Claude Code plugin — a resident guard instead of a
+one-off report.
+
+Install locally (before this is registered in a marketplace), from the
+repo root:
+
+```sh
+/plugin install /path/to/roster
+```
+
+Once installed:
+
+- **`roster-audit` skill** — triggers when you ask to audit an agent roster
+  (overlap, missing harness/tools, routing ambiguity, cost); runs the bundled
+  CLI and explains how to read the findings.
+- **`roster-drift.sh` hook** (`SessionStart`) — on each session, diffs
+  `.claude/agents/` against a cached snapshot and prints a short advisory if
+  agents were added/removed/changed (`ROSTER_DRIFT_DISABLE=1` to opt out).
+  Advisory only — never blocks a session.
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).

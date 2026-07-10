@@ -8,14 +8,22 @@ skills, subagents, tool configs) and interpret the results.
 
 ## Running the CLI
 
-Prefer the plugin's bundled build when available (no install/network needed):
+Prefer the plugin's local build:
 
 ```sh
 node "${CLAUDE_PLUGIN_ROOT}/dist/cli.js" audit <dir>
 ```
 
-If the plugin root isn't set (e.g. running standalone outside the plugin),
-fall back to npx:
+If `dist/cli.js` does not exist yet, build it once in place — the plugin
+installer installs dependencies but skips lifecycle scripts, so a fresh
+install has `node_modules/` (including `tsc`) but no `dist/`:
+
+```sh
+(cd "${CLAUDE_PLUGIN_ROOT}" && npm run build)
+```
+
+Then retry the `node .../dist/cli.js` invocation. If the plugin root isn't
+set at all (e.g. running standalone outside the plugin), fall back to npx:
 
 ```sh
 npx roster-cli audit <dir>

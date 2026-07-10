@@ -1,0 +1,39 @@
+name: Bug report
+description: Report a bug in roster
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: Command(s) run and minimal repro, if possible.
+      placeholder: |
+        roster audit ./my-project --json
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: roster / Node version
+      placeholder: roster-cli 0.1.0, Node 20.x
+    validations:
+      required: false

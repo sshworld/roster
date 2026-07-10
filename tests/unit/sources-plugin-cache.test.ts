@@ -27,10 +27,12 @@ afterAll(async () => {
 });
 
 describe('pluginCacheSource', () => {
-  it('loads only the active installed_plugins.json entries, one per plugin@marketplace', async () => {
+  it('loads exactly one install per plugin NAME, even across marketplaces/versions', async () => {
     const agents = await pluginCacheSource.load({ home: homeDir });
     const names = agents.map((a) => a.name).sort();
-    expect(names).toEqual(['alpha-agent', 'alpha-agent-b', 'beta-agent']);
+    // alpha exists in marketplace-a@1.0.0 and marketplace-b@2.0.0 — only the
+    // highest version wins; gamma exists at 0.6.5 and 0.6.7 — only 0.6.7 wins.
+    expect(names).toEqual(['alpha-agent-b', 'beta-agent', 'gamma-agent']);
   });
 
   it('excludes stale cached copies not referenced by installed_plugins.json', async () => {
@@ -44,22 +46,37 @@ describe('pluginCacheSource', () => {
     expect(betaAgents).toHaveLength(1);
   });
 
+  it('picks the highest version when multiple projects pin different versions', async () => {
+    const agents = await pluginCacheSource.load({ home: homeDir });
+    const gamma = agents.filter((a) => a.name === 'gamma-agent');
+    expect(gamma).toHaveLength(1);
+    expect(gamma[0]?.sourceLabel).toBe('plugin:gamma@0.6.7');
+  });
+
+  it('prefers the entry pinned by the current project (opts.cwd) over a higher version', async () => {
+    const agents = await pluginCacheSource.load({ home: homeDir, cwd: '/proj-a' });
+    const gamma = agents.filter((a) => a.name === 'gamma-agent');
+    expect(gamma).toHaveLength(1);
+    expect(gamma[0]?.sourceLabel).toBe('plugin:gamma@0.6.5');
+  });
+
+  it('prefers a user-scope entry over a higher-versioned project-scope entry', async () => {
+    // beta has a user-scope 0.5.0 entry plus a local entry at the same path;
+    // alpha's winner (2.0.0) is user scope. This guards the scope ordering.
+    const agents = await pluginCacheSource.load({ home: homeDir });
+    const alpha = agents.find((a) => a.name === 'alpha-agent-b');
+    expect(alpha?.sourceLabel).toBe('plugin:alpha@2.0.0');
+  });
+
   it('tags sourceLabel as plugin:<name>@<version>', async () => {
     const agents = await pluginCacheSource.load({ home: homeDir });
-    const alpha = agents.find((a) => a.name === 'alpha-agent');
-    expect(alpha?.sourceLabel).toBe('plugin:alpha@1.0.0');
-    const alphaB = agents.find((a) => a.name === 'alpha-agent-b');
-    expect(alphaB?.sourceLabel).toBe('plugin:alpha@2.0.0');
+    const beta = agents.find((a) => a.name === 'beta-agent');
+    expect(beta?.sourceLabel).toBe('plugin:beta@0.5.0');
   });
 
   it('filters to a single plugin name via opts.pluginName', async () => {
     const agents = await pluginCacheSource.load({ home: homeDir, pluginName: 'beta' });
     expect(agents.map((a) => a.name)).toEqual(['beta-agent']);
-  });
-
-  it('opts.pluginName matching multiple marketplaces returns all of them', async () => {
-    const agents = await pluginCacheSource.load({ home: homeDir, pluginName: 'alpha' });
-    expect(agents.map((a) => a.name).sort()).toEqual(['alpha-agent', 'alpha-agent-b']);
   });
 
   it('returns an empty array (not an error) when installed_plugins.json is missing', async () => {

@@ -21,10 +21,22 @@ import { isExcludedDocFile } from './dir.js';
 // be ignored entirely (this was the actual bug: naive `cache/**/agents` globbing
 // picked up every version+marketplace copy on disk and produced ~100% overlap
 // false positives between duplicate copies of the same plugin).
+//
+// Field data (2026-07-10): the SAME plugin name can also appear under multiple
+// marketplaces AND at multiple versions, because each project scope pins its own
+// version (e.g. superpowers@5.0.7 pinned by one project while user scope runs
+// 6.1.1). Scanning every pinned copy reintroduces the ~100% self-overlap false
+// positives, so we collapse to ONE install per plugin NAME, preferring:
+//   1. the entry pinned by the current project (projectPath == cwd)
+//   2. a user-scope entry
+//   3. the highest version
+// Losing entries are reported on stderr so the narrowing is never silent.
 
 interface InstalledPluginEntry {
   installPath: string;
   version: string;
+  scope?: string;
+  projectPath?: string;
 }
 
 interface InstalledPluginsFile {
@@ -37,6 +49,8 @@ interface ActivePlugin {
   marketplace: string;
   version: string;
   installPath: string;
+  scope?: string;
+  projectPath?: string;
 }
 
 async function readInstalledPlugins(pluginsRoot: string): Promise<InstalledPluginsFile | undefined> {
@@ -49,9 +63,36 @@ async function readInstalledPlugins(pluginsRoot: string): Promise<InstalledPlugi
   }
 }
 
-function resolveActivePlugins(data: InstalledPluginsFile): ActivePlugin[] {
-  const active: ActivePlugin[] = [];
-  const seenInstallPaths = new Set<string>();
+function compareVersions(a: string, b: string): number {
+  const pa = a.split('.').map((n) => parseInt(n, 10));
+  const pb = b.split('.').map((n) => parseInt(n, 10));
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i];
+    const nb = pb[i];
+    if (Number.isNaN(na ?? NaN) || Number.isNaN(nb ?? NaN)) {
+      // Non-numeric segment (git SHAs etc.) — fall back to string compare.
+      return a < b ? -1 : a > b ? 1 : 0;
+    }
+    if ((na ?? 0) !== (nb ?? 0)) return (na ?? 0) - (nb ?? 0);
+  }
+  return 0;
+}
+
+function pickPreferred(a: ActivePlugin, b: ActivePlugin, cwd: string): ActivePlugin {
+  const aCwd = a.projectPath !== undefined && path.resolve(a.projectPath) === cwd;
+  const bCwd = b.projectPath !== undefined && path.resolve(b.projectPath) === cwd;
+  if (aCwd !== bCwd) return aCwd ? a : b;
+
+  const aUser = a.scope === 'user';
+  const bUser = b.scope === 'user';
+  if (aUser !== bUser) return aUser ? a : b;
+
+  return compareVersions(a.version, b.version) >= 0 ? a : b;
+}
+
+function resolveActivePlugins(data: InstalledPluginsFile, cwd: string): ActivePlugin[] {
+  const byName = new Map<string, ActivePlugin>();
+  const skipped: ActivePlugin[] = [];
 
   for (const [key, entries] of Object.entries(data.plugins ?? {})) {
     const sepIndex = key.indexOf('@');
@@ -59,13 +100,38 @@ function resolveActivePlugins(data: InstalledPluginsFile): ActivePlugin[] {
     const marketplace = sepIndex === -1 ? '' : key.slice(sepIndex + 1);
 
     for (const entry of entries) {
-      if (!entry.installPath || seenInstallPaths.has(entry.installPath)) continue;
-      seenInstallPaths.add(entry.installPath);
-      active.push({ name, marketplace, version: entry.version, installPath: entry.installPath });
+      if (!entry.installPath) continue;
+      const candidate: ActivePlugin = {
+        name,
+        marketplace,
+        version: entry.version,
+        installPath: entry.installPath,
+        scope: entry.scope,
+        projectPath: entry.projectPath,
+      };
+      const current = byName.get(name);
+      if (!current) {
+        byName.set(name, candidate);
+      } else if (current.installPath !== candidate.installPath) {
+        const winner = pickPreferred(current, candidate, cwd);
+        const loser = winner === current ? candidate : current;
+        byName.set(name, winner);
+        skipped.push(loser);
+      }
     }
   }
 
-  return active;
+  for (const loser of skipped) {
+    const winner = byName.get(loser.name);
+    if (winner && winner.installPath !== loser.installPath) {
+      console.error(
+        `sources/plugin-cache: skipped ${loser.name}@${loser.version}` +
+          `${loser.projectPath ? ` (pinned by ${loser.projectPath})` : ''} — using ${winner.version}`
+      );
+    }
+  }
+
+  return [...byName.values()];
 }
 
 async function collectMarkdownFiles(root: string): Promise<string[]> {
@@ -113,8 +179,9 @@ export const pluginCacheSource: RosterSource = {
       return [];
     }
 
+    const cwd = path.resolve((opts?.cwd as string | undefined) ?? process.cwd());
     const pluginNameFilter = opts?.pluginName as string | undefined;
-    const activePlugins = resolveActivePlugins(data).filter(
+    const activePlugins = resolveActivePlugins(data, cwd).filter(
       (p) => !pluginNameFilter || p.name === pluginNameFilter
     );
 

@@ -47,7 +47,16 @@ export const dirSource: RosterSource = {
       throw new Error('sources/dir: opts.dir is required');
     }
 
-    const files = await collectMarkdownFiles(dir);
+    let files: string[];
+    try {
+      files = await collectMarkdownFiles(dir);
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code === 'ENOENT' || code === 'ENOTDIR') {
+        throw new Error(`sources/dir: "${dir}" is not a readable directory`);
+      }
+      throw err;
+    }
     const agents = await Promise.all(
       files.map(async (filePath) => {
         const raw = await readFile(filePath, 'utf8');

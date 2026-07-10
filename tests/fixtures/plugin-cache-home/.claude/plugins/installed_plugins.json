@@ -35,6 +35,24 @@
         "installedAt": "2026-01-04T00:00:00.000Z",
         "lastUpdated": "2026-01-04T00:00:00.000Z"
       }
+    ],
+    "gamma@marketplace-a": [
+      {
+        "scope": "local",
+        "projectPath": "/proj-a",
+        "installPath": "__ROOT__/.claude/plugins/cache/marketplace-a/gamma/0.6.5",
+        "version": "0.6.5",
+        "installedAt": "2026-01-05T00:00:00.000Z",
+        "lastUpdated": "2026-01-05T00:00:00.000Z"
+      },
+      {
+        "scope": "local",
+        "projectPath": "/proj-b",
+        "installPath": "__ROOT__/.claude/plugins/cache/marketplace-a/gamma/0.6.7",
+        "version": "0.6.7",
+        "installedAt": "2026-01-06T00:00:00.000Z",
+        "lastUpdated": "2026-01-06T00:00:00.000Z"
+      }
     ]
   }
 }

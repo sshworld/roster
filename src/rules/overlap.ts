@@ -79,8 +79,12 @@ export const overlapRule: Rule = {
     const topPairs = pairs.slice(0, top);
 
     return topPairs.map(({ i, j, score }): Finding => {
-      const a = agents[i].name;
-      const b = agents[j].name;
+      // Same name from two sources (e.g. a repo audited via dir that is also
+      // installed as a plugin) — disambiguate with the source label so the
+      // pair never renders as "x <-> x".
+      const sameName = agents[i].name === agents[j].name;
+      const a = sameName ? `${agents[i].name} (${agents[i].sourceLabel})` : agents[i].name;
+      const b = sameName ? `${agents[j].name} (${agents[j].sourceLabel})` : agents[j].name;
       const critical = failAbove !== undefined && score > failAbove;
       return {
         ruleId: 'overlap',

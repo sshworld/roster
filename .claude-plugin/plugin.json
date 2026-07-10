@@ -1,7 +1,7 @@
 {
   "name": "roster",
-  "version": "0.1.0",
-  "description": "Static auditor for Claude Code agent rosters — overlap, harness gaps, routing, cost — with a resident drift guard.",
+  "version": "0.1.1",
+  "description": "Static auditor for Claude Code agent rosters \u2014 overlap, harness gaps, routing, cost \u2014 with a resident drift guard.",
   "author": {
     "name": "roster contributors"
   },

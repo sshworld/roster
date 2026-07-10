@@ -47,4 +47,17 @@ describe('overlapRule', () => {
     const otherScores = findings.filter((f) => f !== dupFinding).map((f) => f.score ?? 0);
     expect(dupFinding!.score ?? 0).toBeGreaterThan(Math.max(...otherScores));
   });
+
+  it('disambiguates same-named agents from different sources with their source label', async () => {
+    // Auditing a repo that is ALSO installed as a plugin yields the same agent
+    // twice (dir + plugin source) — the pair must not render as "x <-> x".
+    const agents = await dirSource.load({ dir: fixtureDir });
+    const clone = { ...agents[0], sourceLabel: 'plugin:demo@1.0.0' };
+    const findings: Finding[] = overlapRule.run([...agents, clone], { top: 30 });
+
+    const selfPair = findings.find((f) => f.pair!.every((p) => p.includes(agents[0].name)));
+    expect(selfPair).toBeDefined();
+    expect(selfPair!.pair![0]).not.toBe(selfPair!.pair![1]);
+    expect(selfPair!.pair!.join(' ')).toContain('plugin:demo@1.0.0');
+  });
 });

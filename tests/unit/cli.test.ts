@@ -88,11 +88,16 @@ describe('cli main()', () => {
       expect(errors).toContain('not implemented');
     });
 
-    it('dispatches to the usage stub, which exits 2 with "not implemented"', async () => {
-      const code = await main(['usage']);
-      expect(code).toBe(2);
-      const errors = errorSpy.mock.calls.map((c) => c[0]).join('\n');
-      expect(errors).toContain('not implemented');
+    it('dispatches to usage, which is implemented and always exits 0', async () => {
+      // usage.ts is a real report generator (not a stub) — point it at an
+      // empty transcripts root so this stays fast and deterministic.
+      vi.stubEnv('ROSTER_CLAUDE_DIR', path.join(os.tmpdir(), `roster-cli-test-empty-${process.pid}`));
+      try {
+        const code = await main(['usage']);
+        expect(code).toBe(0);
+      } finally {
+        vi.unstubAllEnvs();
+      }
     });
 
     it('exits 1 and prints help for an unknown subcommand', async () => {

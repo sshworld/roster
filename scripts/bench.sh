@@ -16,6 +16,10 @@
 #                  the github source only makes one Trees API call per repo
 #                  plus raw.githubusercontent.com fetches (served by CDN,
 #                  not subject to the same rate limit).
+#   BENCH_LATEST   optional — when set to 1, re-resolves each target's SHA to
+#                  its current HEAD via `git ls-remote` (no GitHub API call,
+#                  avoids rate limits) instead of using the pinned SHA below.
+#                  Unset/0: existing pinned-SHA behavior, unchanged.
 
 set -uo pipefail
 
@@ -126,6 +130,15 @@ for target in "${TARGETS[@]}"; do
   owner="${repo_spec%%/*}"
   name="${repo_spec##*/}"
   slug="${owner}--${name}"
+
+  if [ "${BENCH_LATEST:-0}" = "1" ]; then
+    latest_sha="$(git ls-remote "https://github.com/${repo_spec}.git" HEAD | cut -f1)"
+    if [ -z "$latest_sha" ]; then
+      echo "bench: SKIP ${repo_spec} — could not resolve latest SHA via git ls-remote" >&2
+      continue
+    fi
+    sha="$latest_sha"
+  fi
 
   echo "bench: auditing ${repo_spec}@${sha} ..." >&2
 

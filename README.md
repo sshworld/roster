@@ -52,7 +52,18 @@ roster audit <dir> [--json] [--html <out>] [--user] [--plugin [name]]
 
 ## Benchmarks
 
-Results live in `docs/benchmarks/` — coming soon.
+`roster audit --repo` run against well-known public agent rosters (SHA-pinned,
+reproducible via `scripts/bench.sh`). Full reports: `docs/benchmarks/`.
+
+| roster | agents | top overlap pair (score) | no-tools % | fixed cost (est. tokens/turn) |
+| --- | --- | --- | --- | --- |
+| [msitarzewski/agency-agents](./docs/benchmarks/msitarzewski--agency-agents.md) | 277 | Backend Architect ↔ Backend Architect (0.878) | 93.9% | ~14024 |
+| [wshobson/agents](./docs/benchmarks/wshobson--agents.md) | 691 | api-scaffolding-backend-architect ↔ backend-api-security-backend-architect (1.000) | 97.8% | ~24853 |
+| [contains-studio/agents](./docs/benchmarks/contains-studio--agents.md) | 37 | content-creator ↔ instagram-curator (0.565) | 16.2% | ~8421 |
+
+Several top pairs score at or near 1.000 similarity (e.g. wshobson/agents has
+five pairs at a perfect 1.000) — these are near-duplicate agent files (same
+description/body reused across roles), not incidental topic overlap.
 
 ## Contributing
 

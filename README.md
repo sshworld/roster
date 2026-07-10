@@ -155,10 +155,10 @@ Once installed:
   (`ROSTER_DRIFT_DISABLE=1` to opt out). By default it watches
   `.claude/agents` plus, in a plugin-layout repo (one with a top-level
   `.claude-plugin/plugin.json`), the root `agents/` dir; override with
-  `ROSTER_DRIFT_DIR` (colon-separated dir list). The advisory goes to both
-  Claude's session context (so it can offer an audit proactively) and
-  stderr (so you see it in the terminal). Advisory only — never blocks a
-  session.
+  `ROSTER_DRIFT_DIR` (colon-separated dir list). The advisory is injected
+  into Claude's session context along with a relay directive, so Claude
+  surfaces it to you in its first response of the session. Advisory only —
+  never blocks a session.
 
 ## Contributing
 

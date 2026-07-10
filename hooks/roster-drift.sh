@@ -3,10 +3,14 @@
 #
 # Compares the current project's watched agent-md dir(s) file list + size
 # fingerprint against a cached snapshot (`~/.cache/roster/drift-<repo-hash>.snap`).
-# When drift is detected it prints a short advisory to stdout (SessionStart
-# additionalContext) and stderr (user-visible), and refreshes the snapshot. No
-# drift -> no output. Always exits 0 (advisory only, never blocks). Uses only
-# bash + find/wc/cksum/awk — no node/npx required.
+# When drift is detected it prints a short advisory plus a relay directive to
+# stdout (feeds Claude's SessionStart session context — the directive tells
+# Claude to relay the advisory to the user, since a plain-text advisory can
+# otherwise go unmentioned), and duplicates the bare advisory to stderr
+# (harmless, though not user-visible from an exit-0 SessionStart hook), and
+# refreshes the snapshot. No drift -> no output. Always exits 0 (advisory
+# only, never blocks). Uses only bash + find/wc/cksum/awk — no node/npx
+# required.
 #
 # Watched dirs:
 #   - ROSTER_DRIFT_DIR set: colon-separated dir list, existing dirs only.
@@ -95,10 +99,13 @@ else
   advisory="roster drift: agent(s) in ${dir_display} changed — run \`roster audit ${dir_display}\`"
 fi
 
-# stdout feeds the model's session context (additionalContext); stderr is what
-# the user actually sees in the terminal — emit to both so neither audience
-# misses the advisory.
+# stdout feeds Claude's session context (additionalContext) — append a
+# directive so Claude reliably relays the advisory to the user instead of
+# silently absorbing it into context. stderr gets the bare advisory too
+# (harmless — costs nothing — even though it isn't actually user-visible from
+# an exit-0 SessionStart hook).
 echo "$advisory"
+echo "[roster] Relay the advisory above to the user in one short line at the start of your next response."
 echo "$advisory" >&2
 
 write_snapshot

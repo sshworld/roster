@@ -96,8 +96,9 @@ code3=$?
 assert_exit_zero "$code3" "no changes: exit 0"
 assert_empty "$out3" "no changes: no output"
 
-# 4. add an agent -> advisory output on BOTH stdout (model context) and stderr
-# (user-visible in the TUI)
+# 4. add an agent -> advisory + relay directive on stdout (model context), bare
+# advisory duplicated on stderr (harmless, not user-visible from an exit-0
+# SessionStart hook, but costs nothing to keep)
 cat > "${tmp2}/project/.claude/agents/researcher.md" <<'EOF'
 ---
 name: researcher
@@ -113,6 +114,7 @@ out4="$(cat "${tmp2}/out4")"
 err4="$(cat "${tmp2}/err4")"
 assert_exit_zero "$code4" "agent added: exit 0"
 assert_contains "$out4" "roster drift" "agent added: advisory on stdout"
+assert_contains "$out4" "Relay the advisory" "agent added: relay directive on stdout"
 assert_contains "$err4" "roster drift" "agent added: advisory duplicated on stderr"
 
 # 5. run again after change, no more changes -> no output

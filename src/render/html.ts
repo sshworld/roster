@@ -1,9 +1,9 @@
 import type { Renderer } from '../core/types.js';
-import { NotImplementedError } from '../core/types.js';
+import { renderHtmlTemplate } from './html-template.js';
 
 export const htmlRenderer: Renderer = {
   id: 'html',
-  render() {
-    throw new NotImplementedError('render/html');
+  render(report): string {
+    return renderHtmlTemplate(report);
   },
 };

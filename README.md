@@ -82,6 +82,11 @@ Once installed:
 - **`roster-audit` skill** — triggers when you ask to audit an agent roster
   (overlap, missing harness/tools, routing ambiguity, cost); runs the bundled
   CLI and explains how to read the findings.
+- **`roster-cleanup` skill** — triggers when you ask to clean up, prune, or
+  merge agents. Audits, classifies findings into concrete actions (delete /
+  move / merge / rename / uninstall / narrow tools), asks you to approve each
+  destructive step, executes only what you approved, then re-audits and
+  reports the delta.
 - **`roster-drift.sh` hook** (`SessionStart`) — on each session, diffs
   `.claude/agents/` against a cached snapshot and emits a short advisory if
   agents were added/removed/changed (`ROSTER_DRIFT_DISABLE=1` to opt out).

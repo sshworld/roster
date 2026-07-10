@@ -90,7 +90,21 @@ function pickPreferred(a: ActivePlugin, b: ActivePlugin, cwd: string): ActivePlu
   return compareVersions(a.version, b.version) >= 0 ? a : b;
 }
 
-function resolveActivePlugins(data: InstalledPluginsFile, cwd: string): ActivePlugin[] {
+// --enabled-only: user-scope (or scope absent) entries are always active; a
+// local/project-scope entry is only active for the project that pinned it —
+// i.e. cwd is that project's directory or a subdirectory of it.
+function passesEnabledOnly(entry: InstalledPluginEntry, cwd: string): boolean {
+  if (entry.scope !== 'local' && entry.scope !== 'project') return true;
+  if (!entry.projectPath) return false;
+  const projectPath = path.resolve(entry.projectPath);
+  return cwd === projectPath || cwd.startsWith(projectPath + path.sep);
+}
+
+function resolveActivePlugins(
+  data: InstalledPluginsFile,
+  cwd: string,
+  enabledOnly: boolean
+): ActivePlugin[] {
   const byName = new Map<string, ActivePlugin>();
   const skipped: ActivePlugin[] = [];
 
@@ -101,6 +115,7 @@ function resolveActivePlugins(data: InstalledPluginsFile, cwd: string): ActivePl
 
     for (const entry of entries) {
       if (!entry.installPath) continue;
+      if (enabledOnly && !passesEnabledOnly(entry, cwd)) continue;
       const candidate: ActivePlugin = {
         name,
         marketplace,
@@ -181,7 +196,8 @@ export const pluginCacheSource: RosterSource = {
 
     const cwd = path.resolve((opts?.cwd as string | undefined) ?? process.cwd());
     const pluginNameFilter = opts?.pluginName as string | undefined;
-    const activePlugins = resolveActivePlugins(data, cwd).filter(
+    const enabledOnly = (opts?.enabledOnly as boolean | undefined) ?? false;
+    const activePlugins = resolveActivePlugins(data, cwd, enabledOnly).filter(
       (p) => !pluginNameFilter || p.name === pluginNameFilter
     );
 

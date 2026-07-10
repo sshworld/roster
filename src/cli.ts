@@ -4,6 +4,8 @@ import type { AgentDef, Finding, Report } from './core/types.js';
 import { sources } from './sources/index.js';
 import { rules } from './rules/index.js';
 import { renderers } from './render/index.js';
+import { run as runDoccheck } from './doccheck.js';
+import { run as runUsage } from './usage.js';
 
 interface ParsedArgs {
   dir?: string;
@@ -16,16 +18,23 @@ interface ParsedArgs {
   top?: number;
   failAbove?: number;
   noFail: boolean;
+  enabledOnly: boolean;
   help: boolean;
 }
 
-const HELP_TEXT = `Usage: roster audit [<dir>] [options]
+const HELP_TEXT = `Usage: roster <command> [<dir>] [options]
+
+Commands:
+  audit                       Audit a roster for overlaps and issues
+  doccheck                    Check docs for drift (not yet implemented)
+  usage                       Report agent usage stats (not yet implemented)
 
 Options:
   --json                      Output machine-readable JSON
   --html <out>                Write an HTML report to <out>
   --user                      Load agents from the user-level agent directory
   --plugin [name]             Load agents from the plugin cache
+  --enabled-only              With --plugin, only include entries active for the current project
   --repo <owner/name[@ref]>   Load agents from a GitHub repo
   --top <n>                   Number of top overlapping pairs to report (default 10)
   --fail-above <score>        Mark overlap findings above <score> as critical
@@ -39,6 +48,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     user: false,
     plugin: false,
     noFail: false,
+    enabledOnly: false,
     help: false,
   };
 
@@ -88,6 +98,10 @@ function parseArgs(argv: string[]): ParsedArgs {
         result.noFail = true;
         i += 1;
         break;
+      case '--enabled-only':
+        result.enabledOnly = true;
+        i += 1;
+        break;
       default:
         if (result.dir === undefined && !arg.startsWith('--')) {
           result.dir = arg;
@@ -101,12 +115,14 @@ function parseArgs(argv: string[]): ParsedArgs {
 }
 
 export async function main(argv: string[]): Promise<number> {
-  if (argv.length === 0 || argv.includes('--help') || argv.includes('-h')) {
+  if (argv.length === 0 || argv[0] === '--help' || argv[0] === '-h') {
     console.log(HELP_TEXT);
     return 0;
   }
 
   const [cmd, ...rest] = argv;
+  if (cmd === 'doccheck') return runDoccheck(rest);
+  if (cmd === 'usage') return runUsage(rest);
   if (cmd !== 'audit') {
     console.error(`unknown command: ${cmd}`);
     console.error(HELP_TEXT);
@@ -128,6 +144,10 @@ export async function main(argv: string[]): Promise<number> {
   if (wanted.length === 0) {
     console.error('audit requires a <dir> argument or one of --user / --plugin / --repo');
     return 1;
+  }
+
+  if (parsed.enabledOnly && !parsed.plugin) {
+    console.error('--enabled-only has no effect without --plugin');
   }
 
   let rendererId = 'cli';
@@ -161,7 +181,14 @@ export async function main(argv: string[]): Promise<number> {
       console.error(`not implemented: source '${sourceId}'`);
       return 2;
     }
-    agents.push(...(await source.load({ dir: parsed.dir, pluginName: parsed.pluginName, repo: parsed.repo })));
+    agents.push(
+      ...(await source.load({
+        dir: parsed.dir,
+        pluginName: parsed.pluginName,
+        repo: parsed.repo,
+        enabledOnly: parsed.enabledOnly,
+      }))
+    );
   }
 
   const findings: Finding[] = [];

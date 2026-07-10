@@ -32,7 +32,8 @@ describe('pluginCacheSource', () => {
     const names = agents.map((a) => a.name).sort();
     // alpha exists in marketplace-a@1.0.0 and marketplace-b@2.0.0 — only the
     // highest version wins; gamma exists at 0.6.5 and 0.6.7 — only 0.6.7 wins.
-    expect(names).toEqual(['alpha-agent-b', 'beta-agent', 'gamma-agent']);
+    // epsilon has no scope field at all.
+    expect(names).toEqual(['alpha-agent-b', 'beta-agent', 'epsilon-agent', 'gamma-agent']);
   });
 
   it('excludes stale cached copies not referenced by installed_plugins.json', async () => {
@@ -82,5 +83,47 @@ describe('pluginCacheSource', () => {
   it('returns an empty array (not an error) when installed_plugins.json is missing', async () => {
     const agents = await pluginCacheSource.load({ home: path.join(homeDir, 'does-not-exist') });
     expect(agents).toEqual([]);
+  });
+
+  describe('opts.enabledOnly', () => {
+    it('passes through user-scope entries', async () => {
+      const agents = await pluginCacheSource.load({ home: homeDir, enabledOnly: true, cwd: '/some/unrelated/cwd' });
+      expect(agents.map((a) => a.name)).toContain('beta-agent');
+    });
+
+    it('excludes a local-scope entry pinned by a different project', async () => {
+      const agents = await pluginCacheSource.load({ home: homeDir, enabledOnly: true, cwd: '/proj-a' });
+      // gamma is pinned by /proj-a (0.6.5) and /proj-b (0.6.7); cwd=/proj-a must
+      // only see the /proj-a pin, never the /proj-b one.
+      const gamma = agents.filter((a) => a.name === 'gamma-agent');
+      expect(gamma).toHaveLength(1);
+      expect(gamma[0]?.sourceLabel).toBe('plugin:gamma@0.6.5');
+    });
+
+    it('includes a local-scope entry when cwd is a subdirectory of projectPath', async () => {
+      const agents = await pluginCacheSource.load({
+        home: homeDir,
+        enabledOnly: true,
+        cwd: '/proj-a/nested/deeper',
+      });
+      const gamma = agents.filter((a) => a.name === 'gamma-agent');
+      expect(gamma).toHaveLength(1);
+      expect(gamma[0]?.sourceLabel).toBe('plugin:gamma@0.6.5');
+    });
+
+    it('drops all pins for a plugin when cwd matches none of its projectPaths', async () => {
+      const agents = await pluginCacheSource.load({ home: homeDir, enabledOnly: true, cwd: '/nowhere' });
+      expect(agents.map((a) => a.name)).not.toContain('gamma-agent');
+    });
+
+    it('passes through entries with no scope field', async () => {
+      const agents = await pluginCacheSource.load({ home: homeDir, enabledOnly: true, cwd: '/nowhere' });
+      expect(agents.map((a) => a.name)).toContain('epsilon-agent');
+    });
+
+    it('does not filter anything when enabledOnly is not set', async () => {
+      const agents = await pluginCacheSource.load({ home: homeDir, cwd: '/nowhere' });
+      expect(agents.map((a) => a.name)).toContain('gamma-agent');
+    });
   });
 });

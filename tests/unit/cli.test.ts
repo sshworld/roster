@@ -72,4 +72,38 @@ describe('cli main()', () => {
     expect(code).toBe(0);
     expect(logSpy).toHaveBeenCalled();
   });
+
+  it('warns on stderr but keeps auditing when --enabled-only is used without --plugin', async () => {
+    const code = await main(['audit', fixtureDir, '--enabled-only', '--no-fail']);
+    expect(code).toBe(0);
+    const errors = errorSpy.mock.calls.map((c) => c[0]).join('\n');
+    expect(errors).toContain('--enabled-only');
+  });
+
+  describe('subcommand dispatch', () => {
+    it('dispatches to the doccheck stub, which exits 2 with "not implemented"', async () => {
+      const code = await main(['doccheck']);
+      expect(code).toBe(2);
+      const errors = errorSpy.mock.calls.map((c) => c[0]).join('\n');
+      expect(errors).toContain('not implemented');
+    });
+
+    it('dispatches to the usage stub, which exits 2 with "not implemented"', async () => {
+      const code = await main(['usage']);
+      expect(code).toBe(2);
+      const errors = errorSpy.mock.calls.map((c) => c[0]).join('\n');
+      expect(errors).toContain('not implemented');
+    });
+
+    it('exits 1 and prints help for an unknown subcommand', async () => {
+      const code = await main(['bogus']);
+      expect(code).toBe(1);
+      expect(errorSpy).toHaveBeenCalled();
+    });
+
+    it('still runs the audit subcommand as before', async () => {
+      const code = await main(['audit', fixtureDir, '--no-fail']);
+      expect(code).toBe(0);
+    });
+  });
 });

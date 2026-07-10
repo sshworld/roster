@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "plugins": {
+    "alpha@marketplace-a": [
+      {
+        "scope": "user",
+        "installPath": "__ROOT__/.claude/plugins/cache/marketplace-a/alpha/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-01T00:00:00.000Z",
+        "lastUpdated": "2026-01-01T00:00:00.000Z"
+      }
+    ],
+    "alpha@marketplace-b": [
+      {
+        "scope": "user",
+        "installPath": "__ROOT__/.claude/plugins/cache/marketplace-b/alpha/2.0.0",
+        "version": "2.0.0",
+        "installedAt": "2026-01-02T00:00:00.000Z",
+        "lastUpdated": "2026-01-02T00:00:00.000Z"
+      }
+    ],
+    "beta@marketplace-a": [
+      {
+        "scope": "user",
+        "installPath": "__ROOT__/.claude/plugins/cache/marketplace-a/beta/0.5.0",
+        "version": "0.5.0",
+        "installedAt": "2026-01-03T00:00:00.000Z",
+        "lastUpdated": "2026-01-03T00:00:00.000Z"
+      },
+      {
+        "scope": "local",
+        "projectPath": "/some/other/project",
+        "installPath": "__ROOT__/.claude/plugins/cache/marketplace-a/beta/0.5.0",
+        "version": "0.5.0",
+        "installedAt": "2026-01-04T00:00:00.000Z",
+        "lastUpdated": "2026-01-04T00:00:00.000Z"
+      }
+    ]
+  }
+}

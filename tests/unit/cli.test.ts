@@ -81,11 +81,9 @@ describe('cli main()', () => {
   });
 
   describe('subcommand dispatch', () => {
-    it('dispatches to the doccheck stub, which exits 2 with "not implemented"', async () => {
-      const code = await main(['doccheck']);
-      expect(code).toBe(2);
-      const errors = errorSpy.mock.calls.map((c) => c[0]).join('\n');
-      expect(errors).toContain('not implemented');
+    it('dispatches to doccheck, which exits 0 for the repo\'s real README.md (zero findings)', async () => {
+      const code = await main(['doccheck', 'README.md']);
+      expect(code).toBe(0);
     });
 
     it('dispatches to usage, which is implemented and always exits 0', async () => {

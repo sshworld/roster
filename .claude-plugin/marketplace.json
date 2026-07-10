@@ -9,7 +9,7 @@
       "name": "roster",
       "source": ".",
       "description": "Resident guard for your agent roster \u2014 audit overlap, harness gaps, and context cost on every session.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "author": {
         "name": "sshworld",
         "url": "https://github.com/sshworld"

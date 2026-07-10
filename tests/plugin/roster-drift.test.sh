@@ -136,6 +136,109 @@ assert_empty "$out6" "ROSTER_DRIFT_DISABLE=1: no output"
 
 rm -rf "$tmp2"
 
+# 7. plugin layout: no .claude/agents, but .claude-plugin/plugin.json + root agents/
+# -> agents/ is watched
+tmp7="$(mktemp -d)"
+mkdir -p "${tmp7}/project/.claude-plugin" "${tmp7}/project/agents" "${tmp7}/home"
+printf '{"name":"fixture"}' > "${tmp7}/project/.claude-plugin/plugin.json"
+cat > "${tmp7}/project/agents/helper.md" <<'EOF'
+---
+name: helper
+description: helps
+---
+body
+EOF
+out7a="$(cd "${tmp7}/project" && HOME="${tmp7}/home" bash "$HOOK" 2>&1)"
+code7a=$?
+assert_exit_zero "$code7a" "plugin layout: first run exit 0"
+assert_empty "$out7a" "plugin layout: first run no advisory"
+
+cat > "${tmp7}/project/agents/extra.md" <<'EOF'
+---
+name: extra
+description: extra agent
+---
+body
+EOF
+out7b="$(cd "${tmp7}/project" && HOME="${tmp7}/home" bash "$HOOK" 2>&1)"
+code7b=$?
+assert_exit_zero "$code7b" "plugin layout: after add exit 0"
+assert_contains "$out7b" "roster drift" "plugin layout: advisory on add"
+assert_contains "$out7b" "agents" "plugin layout: advisory names agents dir"
+rm -rf "$tmp7"
+
+# 8. ROSTER_DRIFT_DIR override: only the specified dir(s) are watched, colon-separated
+tmp8="$(mktemp -d)"
+mkdir -p "${tmp8}/project/.claude/agents" "${tmp8}/project/watched" "${tmp8}/home"
+cat > "${tmp8}/project/.claude/agents/ignored.md" <<'EOF'
+---
+name: ignored
+description: should not be watched
+---
+body
+EOF
+cat > "${tmp8}/project/watched/one.md" <<'EOF'
+---
+name: one
+description: watched agent
+---
+body
+EOF
+out8a="$(cd "${tmp8}/project" && HOME="${tmp8}/home" ROSTER_DRIFT_DIR="watched" bash "$HOOK" 2>&1)"
+code8a=$?
+assert_exit_zero "$code8a" "override: first run exit 0"
+assert_empty "$out8a" "override: first run no advisory"
+
+# change in the non-watched default dir -> no advisory
+cat > "${tmp8}/project/.claude/agents/ignored2.md" <<'EOF'
+---
+name: ignored2
+description: still should not be watched
+---
+body
+EOF
+out8b="$(cd "${tmp8}/project" && HOME="${tmp8}/home" ROSTER_DRIFT_DIR="watched" bash "$HOOK" 2>&1)"
+code8b=$?
+assert_exit_zero "$code8b" "override: unrelated dir change exit 0"
+assert_empty "$out8b" "override: unrelated dir change no advisory"
+
+# change in the watched dir -> advisory naming it
+cat > "${tmp8}/project/watched/two.md" <<'EOF'
+---
+name: two
+description: newly watched agent
+---
+body
+EOF
+out8c="$(cd "${tmp8}/project" && HOME="${tmp8}/home" ROSTER_DRIFT_DIR="watched" bash "$HOOK" 2>&1)"
+code8c=$?
+assert_exit_zero "$code8c" "override: watched dir change exit 0"
+assert_contains "$out8c" "roster drift" "override: advisory on watched dir change"
+assert_contains "$out8c" "watched" "override: advisory names watched dir"
+rm -rf "$tmp8"
+
+# 9. v1 snapshot (no version header) -> upgraded silently, no advisory, rewritten as v2
+tmp9="$(mktemp -d)"
+mkdir -p "${tmp9}/project/.claude/agents" "${tmp9}/home/.cache/roster"
+cat > "${tmp9}/project/.claude/agents/one.md" <<'EOF'
+---
+name: one
+description: pre-existing agent
+---
+body
+EOF
+repo_hash9="$(printf '%s' "${tmp9}/project" | cksum | awk '{print $1}')"
+snap9="${tmp9}/home/.cache/roster/drift-${repo_hash9}.snap"
+size9="$(wc -c < "${tmp9}/project/.claude/agents/one.md" | tr -d ' ')"
+printf 'one.md %s\n' "$size9" > "$snap9"
+out9="$(cd "${tmp9}/project" && HOME="${tmp9}/home" bash "$HOOK" 2>&1)"
+code9=$?
+assert_exit_zero "$code9" "v1 snapshot upgrade: exit 0"
+assert_empty "$out9" "v1 snapshot upgrade: no advisory"
+version_line9="$(head -n 1 "$snap9")"
+assert_contains "$version_line9" "v2" "v1 snapshot upgrade: snapshot rewritten as v2"
+rm -rf "$tmp9"
+
 echo ""
 echo "=== summary: ${pass} passed, ${fail} failed ==="
 if [[ "$fail" -gt 0 ]]; then

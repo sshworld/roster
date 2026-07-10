@@ -1,0 +1,23 @@
+{
+  "name": "roster",
+  "owner": {
+    "name": "sshworld",
+    "url": "https://github.com/sshworld"
+  },
+  "plugins": [
+    {
+      "name": "roster",
+      "source": ".",
+      "description": "Resident guard for your agent roster — audit overlap, harness gaps, and context cost on every session.",
+      "version": "0.1.0",
+      "author": {
+        "name": "sshworld",
+        "url": "https://github.com/sshworld"
+      },
+      "homepage": "https://github.com/sshworld/roster",
+      "repository": "https://github.com/sshworld/roster",
+      "license": "MIT",
+      "keywords": ["agents", "claude-code", "audit", "roster", "lint"]
+    }
+  ]
+}

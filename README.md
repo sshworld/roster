@@ -70,11 +70,11 @@ description/body reused across roles), not incidental topic overlap.
 roster also ships as a Claude Code plugin — a resident guard instead of a
 one-off report.
 
-Install locally (before this is registered in a marketplace), from the
-repo root:
+Install via the bundled marketplace manifest:
 
 ```sh
-/plugin install /path/to/roster
+/plugin marketplace add sshworld/roster
+/plugin install roster
 ```
 
 Once installed:

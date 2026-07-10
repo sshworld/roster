@@ -83,9 +83,11 @@ Once installed:
   (overlap, missing harness/tools, routing ambiguity, cost); runs the bundled
   CLI and explains how to read the findings.
 - **`roster-drift.sh` hook** (`SessionStart`) — on each session, diffs
-  `.claude/agents/` against a cached snapshot and prints a short advisory if
+  `.claude/agents/` against a cached snapshot and emits a short advisory if
   agents were added/removed/changed (`ROSTER_DRIFT_DISABLE=1` to opt out).
-  Advisory only — never blocks a session.
+  The advisory goes to both Claude's session context (so it can offer an
+  audit proactively) and stderr (so you see it in the terminal). Advisory
+  only — never blocks a session.
 
 ## Contributing
 

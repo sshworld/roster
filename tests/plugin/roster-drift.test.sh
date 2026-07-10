@@ -96,7 +96,8 @@ code3=$?
 assert_exit_zero "$code3" "no changes: exit 0"
 assert_empty "$out3" "no changes: no output"
 
-# 4. add an agent -> advisory output
+# 4. add an agent -> advisory output on BOTH stdout (model context) and stderr
+# (user-visible in the TUI)
 cat > "${tmp2}/project/.claude/agents/researcher.md" <<'EOF'
 ---
 name: researcher
@@ -104,10 +105,15 @@ description: does research
 ---
 body
 EOF
-out4="$(cd "${tmp2}/project" && HOME="${tmp2}/home" bash "$HOOK" 2>&1)"
+# One invocation, streams captured separately — the hook refreshes its snapshot
+# on each run, so running twice would see no drift the second time.
+(cd "${tmp2}/project" && HOME="${tmp2}/home" bash "$HOOK" >"${tmp2}/out4" 2>"${tmp2}/err4")
 code4=$?
+out4="$(cat "${tmp2}/out4")"
+err4="$(cat "${tmp2}/err4")"
 assert_exit_zero "$code4" "agent added: exit 0"
-assert_contains "$out4" "roster" "agent added: advisory mentions roster"
+assert_contains "$out4" "roster drift" "agent added: advisory on stdout"
+assert_contains "$err4" "roster drift" "agent added: advisory duplicated on stderr"
 
 # 5. run again after change, no more changes -> no output
 out5="$(cd "${tmp2}/project" && HOME="${tmp2}/home" bash "$HOOK" 2>&1)"

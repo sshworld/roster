@@ -51,12 +51,18 @@ previous_count="$(printf '%s\n' "$previous_fingerprint" | grep -c . || true)"
 delta=$((current_count - previous_count))
 
 if [ "$delta" -gt 0 ]; then
-  echo "roster drift: +${delta} agent(s) in ${AGENTS_DIR} — run \`roster audit ${AGENTS_DIR}\`"
+  advisory="roster drift: +${delta} agent(s) in ${AGENTS_DIR} — run \`roster audit ${AGENTS_DIR}\`"
 elif [ "$delta" -lt 0 ]; then
-  echo "roster drift: ${delta} agent(s) in ${AGENTS_DIR} — run \`roster audit ${AGENTS_DIR}\`"
+  advisory="roster drift: ${delta} agent(s) in ${AGENTS_DIR} — run \`roster audit ${AGENTS_DIR}\`"
 else
-  echo "roster drift: agent(s) in ${AGENTS_DIR} changed — run \`roster audit ${AGENTS_DIR}\`"
+  advisory="roster drift: agent(s) in ${AGENTS_DIR} changed — run \`roster audit ${AGENTS_DIR}\`"
 fi
+
+# stdout feeds the model's session context (additionalContext); stderr is what
+# the user actually sees in the terminal — emit to both so neither audience
+# misses the advisory.
+echo "$advisory"
+echo "$advisory" >&2
 
 printf '%s\n' "$current_fingerprint" > "$SNAPSHOT"
 exit 0

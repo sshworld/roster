@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import type { Report } from './core/types.js';
+import { writeFileSync } from 'node:fs';
+import type { AgentDef, Finding, Report } from './core/types.js';
 import { sources } from './sources/index.js';
 import { rules } from './rules/index.js';
 import { renderers } from './render/index.js';
@@ -18,14 +19,14 @@ interface ParsedArgs {
   help: boolean;
 }
 
-const HELP_TEXT = `Usage: roster audit <dir> [options]
+const HELP_TEXT = `Usage: roster audit [<dir>] [options]
 
 Options:
-  --json                      Output machine-readable JSON (S3)
-  --html <out>                Write an HTML report to <out> (S3)
-  --user                      Load agents from the user-level agent directory (S4)
-  --plugin [name]             Load agents from the plugin cache (S4)
-  --repo <owner/name[@ref]>   Load agents from a GitHub repo (S4)
+  --json                      Output machine-readable JSON
+  --html <out>                Write an HTML report to <out>
+  --user                      Load agents from the user-level agent directory
+  --plugin [name]             Load agents from the plugin cache
+  --repo <owner/name[@ref]>   Load agents from a GitHub repo
   --top <n>                   Number of top overlapping pairs to report (default 10)
   --fail-above <score>        Mark overlap findings above <score> as critical
   --no-fail                   Always exit 0, even with critical findings
@@ -118,24 +119,26 @@ export async function main(argv: string[]): Promise<number> {
     return 0;
   }
 
-  let sourceId = 'dir';
-  if (parsed.user) sourceId = 'user';
-  else if (parsed.plugin) sourceId = 'plugin-cache';
-  else if (parsed.repo) sourceId = 'github';
-
-  const source = sources[sourceId];
-  if (!source) {
-    console.error(`unknown source: ${sourceId}`);
+  // 요청된 소스 전부 수집 — 복수 flag 는 병합 스캔 (출처는 sourceLabel 로 구분)
+  const wanted: string[] = [];
+  if (parsed.dir) wanted.push('dir');
+  if (parsed.user) wanted.push('user');
+  if (parsed.plugin) wanted.push('plugin-cache');
+  if (parsed.repo) wanted.push('github');
+  if (wanted.length === 0) {
+    console.error('audit requires a <dir> argument or one of --user / --plugin / --repo');
     return 1;
-  }
-  if (source.stub) {
-    console.error(`not implemented (S4 예정): source '${sourceId}'`);
-    return 2;
   }
 
   let rendererId = 'cli';
   if (parsed.json) rendererId = 'json';
-  else if (parsed.html !== undefined) rendererId = 'html';
+  else if (parsed.html !== undefined) {
+    if (!parsed.html) {
+      console.error('--html requires an output file path');
+      return 1;
+    }
+    rendererId = 'html';
+  }
 
   const renderer = renderers[rendererId];
   if (!renderer) {
@@ -143,19 +146,29 @@ export async function main(argv: string[]): Promise<number> {
     return 1;
   }
   if (renderer.stub) {
-    console.error(`not implemented (S3 예정): renderer '${rendererId}'`);
+    console.error(`not implemented: renderer '${rendererId}'`);
     return 2;
   }
 
-  if (!parsed.dir) {
-    console.error('audit requires a <dir> argument');
-    return 1;
+  const agents: AgentDef[] = [];
+  for (const sourceId of wanted) {
+    const source = sources[sourceId];
+    if (!source) {
+      console.error(`unknown source: ${sourceId}`);
+      return 1;
+    }
+    if (source.stub) {
+      console.error(`not implemented: source '${sourceId}'`);
+      return 2;
+    }
+    agents.push(...(await source.load({ dir: parsed.dir, pluginName: parsed.pluginName, repo: parsed.repo })));
   }
 
-  const agents = await source.load({ dir: parsed.dir, pluginName: parsed.pluginName, repo: parsed.repo });
-
-  const overlapRule = rules.overlap;
-  const findings = overlapRule.run(agents, { top: parsed.top, failAbove: parsed.failAbove });
+  const findings: Finding[] = [];
+  for (const rule of Object.values(rules)) {
+    if (rule.stub) continue;
+    findings.push(...rule.run(agents, { top: parsed.top, failAbove: parsed.failAbove }));
+  }
 
   const report: Report = {
     agents,
@@ -164,7 +177,12 @@ export async function main(argv: string[]): Promise<number> {
   };
 
   const output = renderer.render(report, {});
-  console.log(output);
+  if (rendererId === 'html') {
+    writeFileSync(parsed.html!, output);
+    console.log(`HTML report written: ${parsed.html}`);
+  } else {
+    console.log(output);
+  }
 
   const hasCritical = findings.some((f) => f.severity === 'critical');
   if (parsed.noFail) return 0;

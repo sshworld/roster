@@ -8,7 +8,7 @@ export type RegisteredSource = RosterSource & { stub?: boolean };
 
 export const sources: Record<string, RegisteredSource> = {
   dir: dirSource,
-  user: { ...userSource, stub: true },
-  'plugin-cache': { ...pluginCacheSource, stub: true },
-  github: { ...githubSource, stub: true },
+  user: userSource,
+  'plugin-cache': pluginCacheSource,
+  github: githubSource,
 };

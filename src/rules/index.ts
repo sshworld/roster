@@ -9,8 +9,8 @@ export type RegisteredRule = Rule & { stub?: boolean };
 
 export const rules: Record<string, RegisteredRule> = {
   overlap: overlapRule,
-  harness: { ...harnessRule, stub: true },
-  routing: { ...routingRule, stub: true },
-  cost: { ...costRule, stub: true },
-  fluff: { ...fluffRule, stub: true },
+  harness: harnessRule,
+  routing: routingRule,
+  cost: costRule,
+  fluff: fluffRule,
 };

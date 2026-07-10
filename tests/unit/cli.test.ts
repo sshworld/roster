@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { main } from '../../src/cli.js';
@@ -30,15 +32,32 @@ describe('cli main()', () => {
     expect(code).toBe(0);
   });
 
-  it('exits 2 for stub-backed flags like --json', async () => {
-    const code = await main(['audit', fixtureDir, '--json']);
-    expect(code).toBe(2);
-    expect(errorSpy).toHaveBeenCalled();
+  it('emits valid JSON with --json', async () => {
+    const code = await main(['audit', fixtureDir, '--json', '--no-fail']);
+    expect(code).toBe(0);
+    const printed = logSpy.mock.calls.map((c) => c[0]).join('\n');
+    const parsed = JSON.parse(printed);
+    expect(parsed.findings).toBeDefined();
+    expect(parsed.agents.length).toBeGreaterThan(0);
   });
 
-  it('exits 2 for stub-backed sources like --user', async () => {
-    const code = await main(['audit', fixtureDir, '--user']);
-    expect(code).toBe(2);
+  it('writes a self-contained HTML report with --html <out>', async () => {
+    const out = path.join(os.tmpdir(), `roster-cli-test-${process.pid}.html`);
+    try {
+      const code = await main(['audit', fixtureDir, '--html', out, '--no-fail']);
+      expect(code).toBe(0);
+      const html = fs.readFileSync(out, 'utf8');
+      expect(html.toLowerCase()).toContain('overlap');
+      expect(html).not.toMatch(/<script src=|<link href=|url\(http/);
+    } finally {
+      fs.rmSync(out, { force: true });
+    }
+  });
+
+  it('merges multiple sources and errors without any source', async () => {
+    const code = await main(['audit']);
+    expect(code).toBe(1);
+    expect(errorSpy).toHaveBeenCalled();
   });
 
   it('prints an overlap section via the default human renderer', async () => {

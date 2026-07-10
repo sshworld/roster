@@ -6,6 +6,7 @@ export interface AgentDef {
   body: string;
   sourceLabel: string;
   filePath: string;
+  pluginName?: string;
 }
 
 export type Severity = 'info' | 'warning' | 'critical';

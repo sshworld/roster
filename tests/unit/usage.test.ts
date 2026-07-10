@@ -193,4 +193,18 @@ describe('computeJoin', () => {
     expect(joined.unused).toEqual([]);
     expect(joined.ghosts).toEqual([]);
   });
+
+  it('without an alias map, a plugin-prefixed subagent_type is double-counted as both unused and ghost (regression baseline)', () => {
+    const joined = computeJoin({ 'sshworld:implementor': 33 }, ['implementor']);
+    expect(joined.unused).toEqual(['implementor']);
+    expect(joined.ghosts).toEqual(['sshworld:implementor']);
+  });
+
+  it('normalizes a plugin-prefixed subagent_type via the alias map so it counts toward the bare roster name', () => {
+    const joined = computeJoin({ 'sshworld:implementor': 33 }, ['implementor'], {
+      'sshworld:implementor': 'implementor',
+    });
+    expect(joined.unused).toEqual([]);
+    expect(joined.ghosts).toEqual([]);
+  });
 });

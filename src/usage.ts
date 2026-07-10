@@ -76,16 +76,29 @@ function parseArgs(argv: string[]): ParsedArgs {
 
 /**
  * Pure join between observed invocation counts and a roster's agent names.
- * - unused: in the roster, but zero observed invocations.
- * - ghosts: observed invocations for a subagent_type that isn't in the roster.
+ * - unused: in the roster, but zero observed invocations (directly, or via an
+ *   alias key such as the `<plugin>:<name>` form transcripts record for
+ *   plugin-sourced subagents).
+ * - ghosts: observed invocations for a subagent_type that isn't in the roster
+ *   and isn't a known alias of a roster name.
+ *
+ * `aliases` maps an observed count key (e.g. `sshworld:implementor`) to the
+ * canonical bare roster name (e.g. `implementor`). Omitting it preserves the
+ * prior exact-match-only behavior.
  */
 export function computeJoin(
   counts: Record<string, number>,
-  rosterNames: string[]
+  rosterNames: string[],
+  aliases: Record<string, string> = {}
 ): { unused: string[]; ghosts: string[] } {
   const rosterSet = new Set(rosterNames);
-  const unused = rosterNames.filter((name) => !counts[name]);
-  const ghosts = Object.keys(counts).filter((name) => !rosterSet.has(name));
+  const unused = rosterNames.filter((name) => {
+    if (counts[name]) return false;
+    return !Object.keys(counts).some((key) => aliases[key] === name);
+  });
+  const ghosts = Object.keys(counts).filter(
+    (name) => !rosterSet.has(name) && !(name in aliases && rosterSet.has(aliases[name]))
+  );
   return { unused, ghosts };
 }
 
@@ -166,17 +179,26 @@ async function countAgentInvocations(
   }
 }
 
-async function loadRosterNames(user: boolean, plugin: boolean): Promise<string[]> {
+async function loadRosterNames(
+  user: boolean,
+  plugin: boolean
+): Promise<{ names: string[]; aliases: Record<string, string> }> {
   const names = new Set<string>();
+  const aliases: Record<string, string> = {};
   if (user) {
     const agents = await sources.user.load();
     for (const agent of agents) names.add(agent.name);
   }
   if (plugin) {
     const agents = await sources['plugin-cache'].load();
-    for (const agent of agents) names.add(agent.name);
+    for (const agent of agents) {
+      names.add(agent.name);
+      if (agent.pluginName) {
+        aliases[`${agent.pluginName}:${agent.name}`] = agent.name;
+      }
+    }
   }
-  return [...names];
+  return { names: [...names], aliases };
 }
 
 function renderHuman(days: number, counts: Record<string, number>, unused: string[], ghosts: string[]): string {
@@ -232,8 +254,8 @@ export async function run(argv: string[]): Promise<number> {
   let unused: string[] = [];
   let ghosts: string[] = [];
   if (parsed.user || parsed.plugin) {
-    const rosterNames = await loadRosterNames(parsed.user, parsed.plugin);
-    const joined = computeJoin(counts, rosterNames);
+    const { names: rosterNames, aliases } = await loadRosterNames(parsed.user, parsed.plugin);
+    const joined = computeJoin(counts, rosterNames, aliases);
     unused = joined.unused;
     ghosts = joined.ghosts;
   }

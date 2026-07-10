@@ -211,7 +211,8 @@ export const pluginCacheSource: RosterSource = {
         return Promise.all(
           files.map(async (filePath) => {
             const raw = await readFile(filePath, 'utf8');
-            return parseAgentMarkdown(raw, filePath, sourceLabel);
+            const agent = parseAgentMarkdown(raw, filePath, sourceLabel);
+            return { ...agent, pluginName: plugin.name };
           })
         );
       })

@@ -35,6 +35,7 @@ Options:
   --user                      Load agents from the user-level agent directory
   --plugin [name]             Load agents from the plugin cache
   --enabled-only              With --plugin, only include entries active for the current project
+                              (installation scope) AND enabled in settings.json/settings.local.json
   --repo <owner/name[@ref]>   Load agents from a GitHub repo
   --top <n>                   Number of top overlapping pairs to report (default 10)
   --fail-above <score>        Mark overlap findings above <score> as critical

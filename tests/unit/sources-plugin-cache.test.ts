@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import path from 'node:path';
-import { readFile, writeFile, cp, mkdtemp, rm } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, cp, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { pluginCacheSource } from '../../src/sources/plugin-cache.js';
@@ -32,8 +32,18 @@ describe('pluginCacheSource', () => {
     const names = agents.map((a) => a.name).sort();
     // alpha exists in marketplace-a@1.0.0 and marketplace-b@2.0.0 — only the
     // highest version wins; gamma exists at 0.6.5 and 0.6.7 — only 0.6.7 wins.
-    // epsilon has no scope field at all.
-    expect(names).toEqual(['alpha-agent-b', 'beta-agent', 'epsilon-agent', 'gamma-agent']);
+    // epsilon has no scope field at all. zeta/theta/iota exist for the
+    // settings.json enable/disable tests below (this test runs without
+    // enabledOnly, so settings.json has no effect here).
+    expect(names).toEqual([
+      'alpha-agent-b',
+      'beta-agent',
+      'epsilon-agent',
+      'gamma-agent',
+      'iota-agent',
+      'theta-agent',
+      'zeta-agent',
+    ]);
   });
 
   it('excludes stale cached copies not referenced by installed_plugins.json', async () => {
@@ -124,6 +134,89 @@ describe('pluginCacheSource', () => {
     it('does not filter anything when enabledOnly is not set', async () => {
       const agents = await pluginCacheSource.load({ home: homeDir, cwd: '/nowhere' });
       expect(agents.map((a) => a.name)).toContain('gamma-agent');
+    });
+  });
+
+  describe('opts.enabledOnly + settings.json enable/disable', () => {
+    let projectDir: string;
+    let malformedProjectDir: string;
+
+    beforeAll(async () => {
+      // Project settings.json overrides the user-level settings.json for theta.
+      projectDir = await mkdtemp(path.join(tmpdir(), 'roster-plugin-cache-proj-'));
+      await mkdir(path.join(projectDir, '.claude'), { recursive: true });
+      await writeFile(
+        path.join(projectDir, '.claude', 'settings.json'),
+        JSON.stringify({ enabledPlugins: { 'theta@marketplace-a': false } }),
+        'utf8'
+      );
+
+      // Project settings with malformed/non-object enabledPlugins — must be ignored, not crash.
+      malformedProjectDir = await mkdtemp(path.join(tmpdir(), 'roster-plugin-cache-malformed-'));
+      await mkdir(path.join(malformedProjectDir, '.claude'), { recursive: true });
+      await writeFile(path.join(malformedProjectDir, '.claude', 'settings.json'), JSON.stringify({ enabledPlugins: null }), 'utf8');
+      await writeFile(
+        path.join(malformedProjectDir, '.claude', 'settings.local.json'),
+        JSON.stringify({ enabledPlugins: ['a', 'b'] }),
+        'utf8'
+      );
+    });
+
+    afterAll(async () => {
+      await rm(projectDir, { recursive: true, force: true });
+      await rm(malformedProjectDir, { recursive: true, force: true });
+    });
+
+    it('(a) excludes a plugin explicitly disabled in settings.json, with a stderr notice', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const agents = await pluginCacheSource.load({ home: homeDir, enabledOnly: true, cwd: '/some/unrelated/cwd' });
+      expect(agents.map((a) => a.name)).not.toContain('zeta-agent');
+      expect(spy.mock.calls.map((c) => String(c[0]))).toEqual(
+        expect.arrayContaining([expect.stringContaining('skipped (disabled in settings): zeta@marketplace-a')])
+      );
+      spy.mockRestore();
+    });
+
+    it('(b) includes plugins set to true or absent from settings.json', async () => {
+      const agents = await pluginCacheSource.load({ home: homeDir, enabledOnly: true, cwd: '/some/unrelated/cwd' });
+      const names = agents.map((a) => a.name);
+      expect(names).toContain('theta-agent'); // explicit true
+      expect(names).toContain('epsilon-agent'); // absent from enabledPlugins entirely
+    });
+
+    it('(c) project settings.json overrides user settings.json (true -> false excludes)', async () => {
+      const agents = await pluginCacheSource.load({ home: homeDir, enabledOnly: true, cwd: projectDir });
+      expect(agents.map((a) => a.name)).not.toContain('theta-agent');
+    });
+
+    it('(d) disabling one marketplace entry does not exclude a same-named plugin from another marketplace', async () => {
+      const agents = await pluginCacheSource.load({ home: homeDir, enabledOnly: true, cwd: '/some/unrelated/cwd' });
+      const names = agents.map((a) => a.name);
+      expect(names).not.toContain('iota-agent');
+      expect(names).toContain('iota-agent-b');
+    });
+
+    it('(e) malformed JSON and non-object enabledPlugins (null/array) are ignored without crashing', async () => {
+      const agents = await pluginCacheSource.load({ home: homeDir, enabledOnly: true, cwd: malformedProjectDir });
+      // home settings.local.json is malformed JSON, and this project's settings.json/settings.local.json
+      // have null/array enabledPlugins — none of that should throw, and user-level settings.json still applies.
+      const names = agents.map((a) => a.name);
+      expect(names).toContain('theta-agent');
+      expect(names).not.toContain('zeta-agent');
+    });
+
+    it('(f) does not apply settings.json filtering when enabledOnly is not set', async () => {
+      const agents = await pluginCacheSource.load({ home: homeDir, cwd: '/some/unrelated/cwd' });
+      expect(agents.map((a) => a.name)).toContain('zeta-agent');
+    });
+
+    it('(g) finds project settings.json from a subdirectory of the project (walk-up)', async () => {
+      const agents = await pluginCacheSource.load({
+        home: homeDir,
+        enabledOnly: true,
+        cwd: path.join(projectDir, 'nested', 'deeper'),
+      });
+      expect(agents.map((a) => a.name)).not.toContain('theta-agent');
     });
   });
 });

@@ -48,10 +48,14 @@ roster audit <dir> [--json] [--html <out>] [--user] [--plugin [name]]
 `--enabled-only` (with `--plugin`) restricts the plugin-cache source to entries
 active for the current project.[^enabled-only]
 
-[^enabled-only]: Activation is judged purely by installation **scope**
-    (user-scope entries are always active; local/project-scope entries are
-    active only when the cwd is inside the pinning project). It does not read
-    per-project enable/disable state from `settings.json`.
+[^enabled-only]: Two filters, AND-combined. **Scope**: user-scope entries are
+    always active; local/project-scope entries are active only when the cwd is
+    inside the pinning project. **Settings**: a plugin explicitly disabled via
+    `enabledPlugins` in `settings.json`/`settings.local.json` is excluded —
+    checked across `<home>/.claude/`, then the nearest project directory
+    at-or-above cwd that has a `.claude/settings.json`, with later files
+    winning and a key absent from all of them treated as enabled. This is
+    audit-path only — `usage` does not take `--enabled-only`.
 
 ## doccheck
 

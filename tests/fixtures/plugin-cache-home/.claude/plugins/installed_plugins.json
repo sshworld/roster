@@ -61,6 +61,42 @@
         "installedAt": "2026-01-07T00:00:00.000Z",
         "lastUpdated": "2026-01-07T00:00:00.000Z"
       }
+    ],
+    "zeta@marketplace-a": [
+      {
+        "scope": "user",
+        "installPath": "__ROOT__/.claude/plugins/cache/marketplace-a/zeta/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-08T00:00:00.000Z",
+        "lastUpdated": "2026-01-08T00:00:00.000Z"
+      }
+    ],
+    "theta@marketplace-a": [
+      {
+        "scope": "user",
+        "installPath": "__ROOT__/.claude/plugins/cache/marketplace-a/theta/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-09T00:00:00.000Z",
+        "lastUpdated": "2026-01-09T00:00:00.000Z"
+      }
+    ],
+    "iota@marketplace-a": [
+      {
+        "scope": "user",
+        "installPath": "__ROOT__/.claude/plugins/cache/marketplace-a/iota/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-10T00:00:00.000Z",
+        "lastUpdated": "2026-01-10T00:00:00.000Z"
+      }
+    ],
+    "iota@marketplace-b": [
+      {
+        "scope": "user",
+        "installPath": "__ROOT__/.claude/plugins/cache/marketplace-b/iota/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-11T00:00:00.000Z",
+        "lastUpdated": "2026-01-11T00:00:00.000Z"
+      }
     ]
   }
 }

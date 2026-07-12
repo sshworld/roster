@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { AgentDef, RosterSource } from '../core/types.js';
 import { parseAgentMarkdown } from '../parse/agent-md.js';
 import { isExcludedDocFile } from './dir.js';
+import { readEnabledPluginsMap } from './plugin-settings.js';
 
 // R2 — real ~/.claude/plugins/ layout (verified via `ls`/`cat` against a live
 // installation, 2026-07-10):
@@ -103,7 +104,8 @@ function passesEnabledOnly(entry: InstalledPluginEntry, cwd: string): boolean {
 function resolveActivePlugins(
   data: InstalledPluginsFile,
   cwd: string,
-  enabledOnly: boolean
+  enabledOnly: boolean,
+  enabledPluginsMap: Record<string, boolean>
 ): ActivePlugin[] {
   const byName = new Map<string, ActivePlugin>();
   const skipped: ActivePlugin[] = [];
@@ -112,6 +114,12 @@ function resolveActivePlugins(
     const sepIndex = key.indexOf('@');
     const name = sepIndex === -1 ? key : key.slice(0, sepIndex);
     const marketplace = sepIndex === -1 ? '' : key.slice(sepIndex + 1);
+    const settingsKey = marketplace ? `${name}@${marketplace}` : name;
+
+    if (enabledOnly && enabledPluginsMap[settingsKey] === false) {
+      console.error(`roster: skipped (disabled in settings): ${settingsKey}`);
+      continue;
+    }
 
     for (const entry of entries) {
       if (!entry.installPath) continue;
@@ -197,7 +205,8 @@ export const pluginCacheSource: RosterSource = {
     const cwd = path.resolve((opts?.cwd as string | undefined) ?? process.cwd());
     const pluginNameFilter = opts?.pluginName as string | undefined;
     const enabledOnly = (opts?.enabledOnly as boolean | undefined) ?? false;
-    const activePlugins = resolveActivePlugins(data, cwd, enabledOnly).filter(
+    const enabledPluginsMap = enabledOnly ? await readEnabledPluginsMap(home, cwd) : {};
+    const activePlugins = resolveActivePlugins(data, cwd, enabledOnly, enabledPluginsMap).filter(
       (p) => !pluginNameFilter || p.name === pluginNameFilter
     );
 

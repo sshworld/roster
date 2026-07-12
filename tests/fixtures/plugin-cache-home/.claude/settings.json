@@ -1,0 +1,7 @@
+{
+  "enabledPlugins": {
+    "zeta@marketplace-a": false,
+    "theta@marketplace-a": true,
+    "iota@marketplace-a": false
+  }
+}

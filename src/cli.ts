@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { writeFileSync } from 'node:fs';
+import { realpathSync, writeFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import type { AgentDef, Finding, Report } from './core/types.js';
 import { sources } from './sources/index.js';
 import { rules } from './rules/index.js';
@@ -218,7 +219,14 @@ export async function main(argv: string[]): Promise<number> {
   return hasCritical ? 1 : 0;
 }
 
-const isDirectRun = process.argv[1] !== undefined && import.meta.url === `file://${process.argv[1]}`;
+const isDirectRun = (() => {
+  if (process.argv[1] === undefined) return false;
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+  } catch {
+    return false;
+  }
+})();
 if (isDirectRun) {
   main(process.argv.slice(2)).then(
     (code) => process.exit(code),

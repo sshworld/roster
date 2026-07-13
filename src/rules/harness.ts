@@ -21,7 +21,7 @@ export const harnessRule: Rule = {
           ruleId: 'harness',
           severity: 'warning',
           agent: agent.name,
-          message: '도구 제한 없음 — 전 도구 개방 (모자만 있는 agent)',
+          message: 'no tools declared — unrestricted access (a hat with no hands)',
         });
       }
     }

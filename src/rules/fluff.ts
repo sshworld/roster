@@ -38,7 +38,7 @@ export const fluffRule: Rule = {
           ruleId: 'fluff',
           severity: 'info',
           agent: agent.name,
-          message: `[experimental] ${agent.name} body 는 서사 비율 ${(narrativeRatio * 100).toFixed(0)}% — 실행성 낮음`,
+          message: `[experimental] ${agent.name} body is ${(narrativeRatio * 100).toFixed(0)}% narrative — low executability`,
         });
       }
     }

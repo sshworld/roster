@@ -23,7 +23,7 @@ export const routingRule: Rule = {
           ruleId: 'routing',
           severity: 'warning',
           agent: agent.name,
-          message: 'description 부재 — 메인 모델이 위임 판단 불가',
+          message: 'missing description — the router cannot tell when to delegate',
         });
         continue;
       }
@@ -33,7 +33,7 @@ export const routingRule: Rule = {
           ruleId: 'routing',
           severity: 'info',
           agent: agent.name,
-          message: 'description 에 위임 트리거 신호 없음 (use when/트리거 조건절 권장)',
+          message: 'description has no delegation trigger signal (add a "use when ..." clause)',
         });
       }
 
@@ -42,7 +42,7 @@ export const routingRule: Rule = {
           ruleId: 'routing',
           severity: 'info',
           agent: agent.name,
-          message: `description 이 ${MAX_DESCRIPTION_LENGTH}자를 초과함 (로스터 목록 비대)`,
+          message: `description exceeds ${MAX_DESCRIPTION_LENGTH} chars (bloats the roster listing)`,
         });
       }
     }

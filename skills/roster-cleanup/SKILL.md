@@ -27,7 +27,7 @@ read the actual agent files; scores alone are not evidence enough.
 | **Merge candidate** | Different names, similarity ≥ 0.85, same responsibility on manual read | Merge into one agent; keep the better description/tools |
 | **Not routable** | Missing frontmatter or `description` — can never be selected by the router | Move content elsewhere (user CLAUDE.md, docs) or delete |
 | **Name collision** | Same name across two *enabled* plugins | Rename one (it's the user's plugin) or disable one pack |
-| **Unused pack** | Plugin/agents the user no longer uses (ask — usage is not in the data) | `claude plugin uninstall` (note: local-scope installs need `--scope local` from that project's directory) |
+| **Unused pack** | `node "${CLAUDE_PLUGIN_ROOT}/dist/cli.js" usage --plugin --json` → `plugins[].status == "unused"` (every agent that plugin ships has 0 observed invocations). `no-agents` plugins (ships zero agents) are excluded — there's no usage signal to judge them on. | `claude plugin uninstall <name>` (local-scope installs need `--scope local` from that project's directory) |
 | **Unrestricted tools** | No `tools:` declaration on an advisory/persona agent | Narrow to `Read, Grep` etc. |
 
 ## Step 3 — Ask, don't act
@@ -41,8 +41,14 @@ but never bundle a destructive action inside a default.
 
 - Delete/move files exactly as approved; for merges, write the merged agent
   first, show it, then remove the originals.
-- Plugin uninstalls: user scope from anywhere; local scope from each pinned
-  project directory.
+- Plugin uninstalls (after explicit user approval per plugin):
+  1. `claude plugin uninstall <name>` — user-scope installs, run from anywhere.
+  2. Local-scope installs: run the same command with `--scope local` **from
+     the pinning project's directory** (the `projectPath` reported by
+     `usage --plugin --json`'s `plugins[]` entries, or `audit`'s plugin
+     metadata) — running it elsewhere silently no-ops.
+  3. Re-run `usage --plugin --json` (Step 5) to confirm the plugin is gone
+     from the roster before reporting success.
 
 ## Step 5 — Verify
 

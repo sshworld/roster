@@ -137,6 +137,24 @@ Joining with `--user` and/or `--plugin` also reports:
 - **unused** — agents present in the roster with zero observed invocations
 - **ghosts** — invoked `subagent_type` values that don't match any roster agent
 
+`--plugin --json` additionally adds a `plugins` array (always present and
+always an array when `--plugin` is passed, even if empty) — one entry per
+installed plugin:
+
+```json
+{ "name": "some-plugin", "scope": "user", "version": "1.2.0",
+  "agentCount": 3, "usedCount": 0, "unusedAgents": ["a", "b", "c"],
+  "status": "unused" }
+```
+
+`status` is `"unused"` when every agent that plugin ships has zero observed
+invocations (a plugin-level **uninstall candidate** — human output lists
+these under `Fully-unused plugins (uninstall candidates):` with a
+`claude plugin uninstall <name>` hint), `"used"` when at least one agent was
+invoked, or `"no-agents"` when the plugin ships zero agents (excluded from
+the uninstall-candidate judgement — listed separately as
+`No agents (usage unknown): ...`).
+
 Always exits `0` — this is a reporting tool, not a gate.
 
 ## Rules

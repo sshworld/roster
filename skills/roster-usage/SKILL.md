@@ -42,10 +42,28 @@ the roster-audit skill — the same recovery steps apply here.
   Ghosts are often built-in agent types (`Explore`, `Plan`, `general-purpose`)
   — that's expected, not a problem, unless a custom agent name shows up here.
 
+## Per-plugin rollup (`--plugin`)
+
+`--plugin --json` adds a `plugins` array — one entry per installed plugin,
+each with `agentCount`, `usedCount`, `unusedAgents`, and a `status`:
+
+- `plugins[].status == "unused"` — every agent that plugin ships has zero
+  observed invocations. These are **uninstall candidates**: surface them and,
+  if the user agrees, hand off to `/roster-cleanup` to run the actual
+  `claude plugin uninstall`.
+- `plugins[].status == "used"` — at least one of its agents was invoked
+  (directly or via its `<plugin>:<name>` alias) — keep.
+- `plugins[].status == "no-agents"` — the plugin ships zero agents, so there's
+  nothing to judge; **excluded** from the uninstall-candidate judgement, don't
+  propose uninstalling on usage data alone.
+- A disabled-but-still-installed plugin can still show up as an uninstall
+  candidate here — `usage` has no `--enabled-only` flag, so it doesn't filter
+  by enabled state the way `audit --enabled-only` does.
+
 ## Follow-up
 
-If several unused agents show up, suggest running `/roster-cleanup` to turn
-that list into a concrete, user-approved cleanup.
+If several unused agents (or fully-unused plugins) show up, suggest running
+`/roster-cleanup` to turn that list into a concrete, user-approved cleanup.
 
 ## Three traps
 

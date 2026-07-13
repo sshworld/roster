@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   update-leaderboard:
@@ -40,20 +39,16 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Commit and open leaderboard PR
+      # Benchmark data is a deterministic script output (docs + README table only),
+      # so it is pushed straight to main — no PR, no manual merge.
+      # If branch protection is enabled later, allow this workflow to bypass it
+      # (see docs/branch-protection.md).
+      - name: Commit and push to main
         if: steps.diff.outputs.changed == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/benchmarks README.md
           git commit -m "chore: refresh benchmark leaderboard"
-          git push --force origin HEAD:refs/heads/bot/leaderboard
-          gh pr create \
-            --title "chore: refresh benchmark leaderboard" \
-            --body "Automated weekly re-run of the benchmark suite against the latest upstream SHAs." \
-            --base main \
-            --head bot/leaderboard \
-            || true
-          gh workflow run ci.yml --ref bot/leaderboard
+          git pull --rebase origin main
+          git push origin HEAD:main

@@ -38,3 +38,10 @@ gh api -X PUT repos/{owner}/{repo}/branches/main/protection \
 
 Adjust `{owner}/{repo}` and status check context names to match the actual
 CI job names.
+
+## Note: leaderboard workflow pushes to main
+
+`.github/workflows/leaderboard.yml` commits benchmark refreshes directly to
+`main` (no PR). If you enable branch protection as above, that push will be
+blocked. Either use a ruleset with a bypass entry for GitHub Actions, or
+switch the workflow back to a PR flow before enabling protection.

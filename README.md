@@ -116,7 +116,7 @@ Always exits `0` — this is a reporting tool, not a gate.
 reproducible via `scripts/bench.sh`). Full reports: `docs/benchmarks/`.
 
 A weekly cron re-runs the benchmark suite against each roster's latest
-upstream HEAD and opens a refresh PR with any changes.[^leaderboard-cron]
+upstream HEAD and pushes any changes straight to `main`.[^leaderboard-cron]
 
 <!-- bench:start -->
 | Repo | Agents | Top overlap pair | No-tools % | Fixed cost |

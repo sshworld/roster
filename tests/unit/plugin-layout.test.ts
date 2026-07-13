@@ -71,6 +71,26 @@ describe('skills/roster-audit/SKILL.md', () => {
   });
 });
 
+describe('skills/roster-usage/SKILL.md', () => {
+  it('exists and has expected frontmatter', async () => {
+    const skillPath = path.join(repoRoot, 'skills/roster-usage/SKILL.md');
+    expect(await exists(skillPath)).toBe(true);
+    const content = await readFile(skillPath, 'utf8');
+    expect(content).toMatch(/^---/);
+    expect(content).toContain('name: roster-usage');
+  });
+});
+
+describe('skills/roster-cleanup/SKILL.md', () => {
+  it('exists and has expected frontmatter', async () => {
+    const skillPath = path.join(repoRoot, 'skills/roster-cleanup/SKILL.md');
+    expect(await exists(skillPath)).toBe(true);
+    const content = await readFile(skillPath, 'utf8');
+    expect(content).toMatch(/^---/);
+    expect(content).toContain('name: roster-cleanup');
+  });
+});
+
 describe('hooks/roster-drift.sh', () => {
   it('exists and is executable', async () => {
     const hookPath = path.join(repoRoot, 'hooks/roster-drift.sh');

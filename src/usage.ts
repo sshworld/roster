@@ -3,7 +3,9 @@ import { readdir, stat } from 'node:fs/promises';
 import { createInterface } from 'node:readline';
 import os from 'node:os';
 import path from 'node:path';
+import type { AgentDef } from './core/types.js';
 import { sources } from './sources/index.js';
+import { loadPluginRoster, type ActivePlugin } from './sources/plugin-cache.js';
 import { bold, red, yellow, supportsColor } from './render/ansi.js';
 
 interface ParsedArgs {
@@ -23,7 +25,8 @@ Options:
   --days <n>       Only count invocations from the last <n> days (default 30)
   --json           Output machine-readable JSON
   --user           Join against the user-level agent roster (~/.claude/agents)
-  --plugin         Join against the installed plugin-cache roster
+  --plugin         Join against the installed plugin-cache roster, plus a
+                   per-plugin unused-agent rollup (uninstall candidates)
   --help, -h       Show this help text
 
 Env:
@@ -101,6 +104,64 @@ export function computeJoin(
     (name) => !rosterSet.has(name) && !(name in aliases && rosterSet.has(aliases[name]))
   );
   return { unused, ghosts };
+}
+
+export interface PluginRollupEntry {
+  name: string;
+  scope?: string;
+  projectPath?: string;
+  version: string;
+  agentCount: number;
+  usedCount: number;
+  unusedAgents: string[];
+  status: 'unused' | 'used' | 'no-agents';
+}
+
+/**
+ * Per-plugin unused-agent rollup — the data behind `--plugin`'s uninstall
+ * candidates: a plugin is `unused` when every agent it ships has zero
+ * observed invocations, `used` when at least one does, and `no-agents` when
+ * it ships zero agents at all (excluded from the unused/used judgement —
+ * there's nothing to have observed).
+ *
+ * "used" (agent, not invocation) = `counts[name] > 0` OR
+ * `counts["<pluginName>:<name>"] > 0` (the alias form transcripts record for
+ * plugin-sourced subagents). The bare-name check can false-positive "used" if
+ * an unrelated same-named user agent is invoked instead — that's the safe
+ * direction: it can only make us under-report an uninstall candidate, never
+ * wrongly flag an in-use plugin as safe to remove.
+ */
+export function computePluginRollup(
+  counts: Record<string, number>,
+  agents: AgentDef[],
+  activePlugins: Pick<ActivePlugin, 'name' | 'version' | 'scope' | 'projectPath'>[]
+): PluginRollupEntry[] {
+  return activePlugins.map((plugin) => {
+    const pluginAgents = agents.filter((agent) => agent.pluginName === plugin.name);
+    const unusedAgents: string[] = [];
+    let usedCount = 0;
+
+    for (const agent of pluginAgents) {
+      const used = Boolean(counts[agent.name]) || Boolean(counts[`${plugin.name}:${agent.name}`]);
+      if (used) usedCount += 1;
+      else unusedAgents.push(agent.name);
+    }
+
+    const agentCount = pluginAgents.length;
+    const status: PluginRollupEntry['status'] =
+      agentCount === 0 ? 'no-agents' : usedCount > 0 ? 'used' : 'unused';
+
+    return {
+      name: plugin.name,
+      scope: plugin.scope,
+      projectPath: plugin.projectPath,
+      version: plugin.version,
+      agentCount,
+      usedCount,
+      unusedAgents,
+      status,
+    };
+  });
 }
 
 async function findJsonlFiles(root: string): Promise<string[]> {
@@ -183,23 +244,37 @@ async function countAgentInvocations(
 async function loadRosterNames(
   user: boolean,
   plugin: boolean
-): Promise<{ names: string[]; aliases: Record<string, string> }> {
+): Promise<{
+  names: string[];
+  aliases: Record<string, string>;
+  pluginAgents: AgentDef[];
+  activePlugins: ActivePlugin[];
+}> {
   const names = new Set<string>();
   const aliases: Record<string, string> = {};
+  let pluginAgents: AgentDef[] = [];
+  let activePlugins: ActivePlugin[] = [];
+
   if (user) {
     const agents = await sources.user.load();
     for (const agent of agents) names.add(agent.name);
   }
   if (plugin) {
-    const agents = await sources['plugin-cache'].load();
-    for (const agent of agents) {
+    // loadPluginRoster resolves installed_plugins.json exactly once and hands
+    // back both the plugin list and their agents from that single pass — see
+    // sources/plugin-cache.ts for why calling load() + a separate active-plugin
+    // lookup here would double-parse and double-log.
+    const roster = await loadPluginRoster();
+    pluginAgents = roster.agents;
+    activePlugins = roster.plugins;
+    for (const agent of pluginAgents) {
       names.add(agent.name);
       if (agent.pluginName) {
         aliases[`${agent.pluginName}:${agent.name}`] = agent.name;
       }
     }
   }
-  return { names: [...names], aliases };
+  return { names: [...names], aliases, pluginAgents, activePlugins };
 }
 
 function renderHuman(
@@ -207,6 +282,7 @@ function renderHuman(
   counts: Record<string, number>,
   unused: string[],
   ghosts: string[],
+  pluginRollup: PluginRollupEntry[] | undefined,
   color: boolean
 ): string {
   const lines: string[] = [];
@@ -229,6 +305,28 @@ function renderHuman(
   if (ghosts.length > 0) {
     lines.push(red('Ghost subagent_type (invoked, not in roster):', color));
     for (const name of ghosts) lines.push(`  ${name}`);
+  }
+
+  if (pluginRollup) {
+    const fullyUnused = pluginRollup.filter((p) => p.status === 'unused');
+    const noAgents = pluginRollup.filter((p) => p.status === 'no-agents');
+
+    if (fullyUnused.length > 0) {
+      lines.push(yellow('Fully-unused plugins (uninstall candidates):', color));
+      for (const p of fullyUnused) {
+        const scopeHint =
+          p.scope === 'local' || p.scope === 'project'
+            ? ` (--scope local, run from ${p.projectPath ?? 'the pinning project'})`
+            : '';
+        lines.push(
+          `  ${p.name} — ${p.agentCount} agent(s) unused: claude plugin uninstall ${p.name}${scopeHint}`
+        );
+      }
+    }
+
+    if (noAgents.length > 0) {
+      lines.push(`No agents (usage unknown): ${noAgents.map((p) => p.name).join(', ')}`);
+    }
   }
 
   return lines.join('\n');
@@ -260,17 +358,29 @@ export async function run(argv: string[]): Promise<number> {
 
   let unused: string[] = [];
   let ghosts: string[] = [];
+  // Contract: --plugin always yields a `plugins` array in the JSON output
+  // (even when empty) — never omitted, never left undefined.
+  let pluginRollup: PluginRollupEntry[] | undefined;
   if (parsed.user || parsed.plugin) {
-    const { names: rosterNames, aliases } = await loadRosterNames(parsed.user, parsed.plugin);
+    const { names: rosterNames, aliases, pluginAgents, activePlugins } = await loadRosterNames(
+      parsed.user,
+      parsed.plugin
+    );
     const joined = computeJoin(counts, rosterNames, aliases);
     unused = joined.unused;
     ghosts = joined.ghosts;
+
+    if (parsed.plugin) {
+      pluginRollup = computePluginRollup(counts, pluginAgents, activePlugins);
+    }
   }
 
   if (parsed.json) {
-    console.log(JSON.stringify({ days: parsed.days, counts, unused, ghosts }));
+    const output: Record<string, unknown> = { days: parsed.days, counts, unused, ghosts };
+    if (parsed.plugin) output.plugins = pluginRollup ?? [];
+    console.log(JSON.stringify(output));
   } else {
-    console.log(renderHuman(parsed.days, counts, unused, ghosts, supportsColor()));
+    console.log(renderHuman(parsed.days, counts, unused, ghosts, pluginRollup, supportsColor()));
   }
 
   return 0;

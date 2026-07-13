@@ -1,6 +1,6 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
-import type { AgentDef, RosterSource } from '../core/types.js';
+import type { AgentDef, RosterSource, RosterSourceLoadOptions } from '../core/types.js';
 import { parseAgentMarkdown } from '../parse/agent-md.js';
 import { isExcludedDocFile } from './dir.js';
 import { readEnabledPluginsMap } from './plugin-settings.js';
@@ -45,13 +45,18 @@ interface InstalledPluginsFile {
   plugins?: Record<string, InstalledPluginEntry[]>;
 }
 
-interface ActivePlugin {
+export interface ActivePlugin {
   name: string;
   marketplace: string;
   version: string;
   installPath: string;
   scope?: string;
   projectPath?: string;
+}
+
+export interface PluginRoster {
+  plugins: ActivePlugin[];
+  agents: AgentDef[];
 }
 
 async function readInstalledPlugins(pluginsRoot: string): Promise<InstalledPluginsFile | undefined> {
@@ -185,48 +190,70 @@ async function dirExists(dir: string): Promise<boolean> {
   }
 }
 
+// Single resolution of "which plugins are active" (installed_plugins.json parsed
+// once, name-collapsing + scope/enabled filtering applied once). Both `load()`
+// and `loadPluginRoster()` build on this so neither re-parses the file nor
+// re-emits the dedup/skip stderr notices a second time.
+export async function listActivePlugins(opts?: RosterSourceLoadOptions): Promise<ActivePlugin[]> {
+  const home = (opts?.home as string | undefined) ?? process.env.HOME;
+  if (!home) {
+    console.error('sources/plugin-cache: HOME is not set, no opts.home override provided — returning empty roster');
+    return [];
+  }
+
+  const pluginsRoot = path.join(home, '.claude', 'plugins');
+  const data = await readInstalledPlugins(pluginsRoot);
+  if (!data) {
+    console.error(`sources/plugin-cache: ${pluginsRoot}/installed_plugins.json not found — returning empty roster`);
+    return [];
+  }
+
+  const cwd = path.resolve((opts?.cwd as string | undefined) ?? process.cwd());
+  const pluginNameFilter = opts?.pluginName as string | undefined;
+  const enabledOnly = (opts?.enabledOnly as boolean | undefined) ?? false;
+  const enabledPluginsMap = enabledOnly ? await readEnabledPluginsMap(home, cwd) : {};
+  return resolveActivePlugins(data, cwd, enabledOnly, enabledPluginsMap).filter(
+    (p) => !pluginNameFilter || p.name === pluginNameFilter
+  );
+}
+
+async function scanAgents(activePlugins: ActivePlugin[]): Promise<AgentDef[]> {
+  const agentLists = await Promise.all(
+    activePlugins.map(async (plugin) => {
+      const agentsDir = path.join(plugin.installPath, 'agents');
+      if (!(await dirExists(agentsDir))) return [];
+
+      const files = await collectMarkdownFiles(agentsDir);
+      const sourceLabel = `plugin:${plugin.name}@${plugin.version}`;
+      return Promise.all(
+        files.map(async (filePath) => {
+          const raw = await readFile(filePath, 'utf8');
+          const agent = parseAgentMarkdown(raw, filePath, sourceLabel);
+          return { ...agent, pluginName: plugin.name };
+        })
+      );
+    })
+  );
+
+  return agentLists.flat();
+}
+
+// usage's `--plugin` rollup needs both the resolved plugin list AND their
+// agents from a single parse — calling `load()` (agents only) and a separate
+// active-plugin lookup would parse installed_plugins.json twice and double
+// the dedup/skip stderr notices, and the resulting agent set could drift from
+// the plugin list if either lookup ran with different opts.
+export async function loadPluginRoster(opts?: RosterSourceLoadOptions): Promise<PluginRoster> {
+  const plugins = await listActivePlugins(opts);
+  const agents = await scanAgents(plugins);
+  return { plugins, agents };
+}
+
 export const pluginCacheSource: RosterSource = {
   id: 'plugin-cache',
   description: 'Loads agents from the installed Claude Code plugin cache.',
   async load(opts): Promise<AgentDef[]> {
-    const home = (opts?.home as string | undefined) ?? process.env.HOME;
-    if (!home) {
-      console.error('sources/plugin-cache: HOME is not set, no opts.home override provided — returning empty roster');
-      return [];
-    }
-
-    const pluginsRoot = path.join(home, '.claude', 'plugins');
-    const data = await readInstalledPlugins(pluginsRoot);
-    if (!data) {
-      console.error(`sources/plugin-cache: ${pluginsRoot}/installed_plugins.json not found — returning empty roster`);
-      return [];
-    }
-
-    const cwd = path.resolve((opts?.cwd as string | undefined) ?? process.cwd());
-    const pluginNameFilter = opts?.pluginName as string | undefined;
-    const enabledOnly = (opts?.enabledOnly as boolean | undefined) ?? false;
-    const enabledPluginsMap = enabledOnly ? await readEnabledPluginsMap(home, cwd) : {};
-    const activePlugins = resolveActivePlugins(data, cwd, enabledOnly, enabledPluginsMap).filter(
-      (p) => !pluginNameFilter || p.name === pluginNameFilter
-    );
-
-    const agentLists = await Promise.all(
-      activePlugins.map(async (plugin) => {
-        const agentsDir = path.join(plugin.installPath, 'agents');
-        if (!(await dirExists(agentsDir))) return [];
-
-        const files = await collectMarkdownFiles(agentsDir);
-        const sourceLabel = `plugin:${plugin.name}@${plugin.version}`;
-        return Promise.all(
-          files.map(async (filePath) => {
-            const raw = await readFile(filePath, 'utf8');
-            const agent = parseAgentMarkdown(raw, filePath, sourceLabel);
-            return { ...agent, pluginName: plugin.name };
-          })
-        );
-      })
-    );
-
-    return agentLists.flat();
+    const activePlugins = await listActivePlugins(opts);
+    return scanAgents(activePlugins);
   },
 };

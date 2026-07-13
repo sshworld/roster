@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { run, computeJoin } from '../../src/usage.js';
+import { run, computeJoin, computePluginRollup } from '../../src/usage.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixtureRoot = path.join(__dirname, '../fixtures/usage-home');
@@ -88,6 +90,18 @@ describe('usage', () => {
           content: [{ type: 'tool_use', name: 'Agent', input: { subagent_type: 'no-timestamp-agent' } }],
         },
       })
+    );
+
+    // proj-plugin-rollup: feeds the --plugin rollup integration test below —
+    // one direct hit for the bare agent name, one alias-qualified hit
+    // (`<pluginName>:<agentName>`, the form transcripts record for plugin-sourced
+    // subagents) so both "used" detection paths are exercised end-to-end.
+    const pluginRollupDir = path.join(fixtureRoot, 'projects', 'proj-plugin-rollup');
+    fs.mkdirSync(pluginRollupDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(pluginRollupDir, 'session.jsonl'),
+      assistantAgentLine('solo-used-agent', iso(60 * 60 * 1000)) +
+        assistantAgentLine('alias-used-plugin:alias-used-agent', iso(60 * 60 * 1000))
     );
   });
 
@@ -175,6 +189,117 @@ describe('usage', () => {
     const printed = logSpy.mock.calls.map((c) => c[0]).join('\n');
     expect(printed.toLowerCase()).toContain('usage');
   });
+
+  describe('--plugin rollup integration', () => {
+    let pluginHome: string;
+
+    beforeAll(async () => {
+      pluginHome = await mkdtemp(path.join(tmpdir(), 'roster-usage-plugin-'));
+
+      function pluginDir(marketplace: string, name: string, version: string): string {
+        return path.join(pluginHome, '.claude', 'plugins', 'cache', marketplace, name, version);
+      }
+
+      function writeAgent(dir: string, name: string): void {
+        fs.mkdirSync(path.join(dir, 'agents'), { recursive: true });
+        fs.writeFileSync(
+          path.join(dir, 'agents', `${name}.md`),
+          `---\nname: ${name}\ndescription: fixture agent ${name}\n---\n\nBody for ${name}.\n`
+        );
+      }
+
+      const unusedDir = pluginDir('marketplace-x', 'unused-plugin', '1.0.0');
+      writeAgent(unusedDir, 'unused-plugin-agent');
+
+      const usedDir = pluginDir('marketplace-x', 'used-plugin', '1.0.0');
+      writeAgent(usedDir, 'solo-used-agent');
+
+      const aliasDir = pluginDir('marketplace-x', 'alias-used-plugin', '1.0.0');
+      writeAgent(aliasDir, 'alias-used-agent');
+
+      const emptyDir = pluginDir('marketplace-x', 'empty-plugin', '1.0.0');
+      fs.mkdirSync(emptyDir, { recursive: true }); // no agents/ subdir at all
+
+      const pluginsRoot = path.join(pluginHome, '.claude', 'plugins');
+      fs.mkdirSync(pluginsRoot, { recursive: true });
+      fs.writeFileSync(
+        path.join(pluginsRoot, 'installed_plugins.json'),
+        JSON.stringify({
+          version: 2,
+          plugins: {
+            'unused-plugin@marketplace-x': [
+              {
+                scope: 'user',
+                installPath: unusedDir,
+                version: '1.0.0',
+                installedAt: '2026-01-01T00:00:00.000Z',
+                lastUpdated: '2026-01-01T00:00:00.000Z',
+              },
+            ],
+            'used-plugin@marketplace-x': [
+              {
+                scope: 'user',
+                installPath: usedDir,
+                version: '1.0.0',
+                installedAt: '2026-01-01T00:00:00.000Z',
+                lastUpdated: '2026-01-01T00:00:00.000Z',
+              },
+            ],
+            'alias-used-plugin@marketplace-x': [
+              {
+                scope: 'user',
+                installPath: aliasDir,
+                version: '1.0.0',
+                installedAt: '2026-01-01T00:00:00.000Z',
+                lastUpdated: '2026-01-01T00:00:00.000Z',
+              },
+            ],
+            'empty-plugin@marketplace-x': [
+              {
+                scope: 'user',
+                installPath: emptyDir,
+                version: '1.0.0',
+                installedAt: '2026-01-01T00:00:00.000Z',
+                lastUpdated: '2026-01-01T00:00:00.000Z',
+              },
+            ],
+          },
+        })
+      );
+    });
+
+    afterAll(async () => {
+      await rm(pluginHome, { recursive: true, force: true });
+    });
+
+    beforeEach(() => {
+      vi.stubEnv('HOME', pluginHome);
+    });
+
+    it('always returns a `plugins` array (contract) and classifies each fixture plugin by status', async () => {
+      const code = await run(['--plugin', '--json']);
+      expect(code).toBe(0);
+      const printed = logSpy.mock.calls.map((c) => c[0]).join('\n');
+      const parsed = JSON.parse(printed) as { plugins: unknown };
+      expect(Array.isArray(parsed.plugins)).toBe(true);
+
+      const plugins = parsed.plugins as Array<{ name: string; status: string; agentCount: number }>;
+      const byName = Object.fromEntries(plugins.map((p) => [p.name, p]));
+      expect(byName['unused-plugin']?.status).toBe('unused');
+      expect(byName['used-plugin']?.status).toBe('used');
+      expect(byName['alias-used-plugin']?.status).toBe('used');
+      expect(byName['empty-plugin']?.status).toBe('no-agents');
+      expect(byName['empty-plugin']?.agentCount).toBe(0);
+    });
+
+    it('omits the `plugins` field entirely when --plugin is not passed', async () => {
+      const code = await run(['--json']);
+      expect(code).toBe(0);
+      const printed = logSpy.mock.calls.map((c) => c[0]).join('\n');
+      const parsed = JSON.parse(printed) as Record<string, unknown>;
+      expect('plugins' in parsed).toBe(false);
+    });
+  });
 });
 
 describe('computeJoin', () => {
@@ -206,5 +331,61 @@ describe('computeJoin', () => {
     });
     expect(joined.unused).toEqual([]);
     expect(joined.ghosts).toEqual([]);
+  });
+});
+
+function fakeAgent(name: string, pluginName: string) {
+  return {
+    name,
+    description: `fake agent ${name}`,
+    body: 'fake body',
+    sourceLabel: `plugin:${pluginName}@1.0.0`,
+    filePath: `/fake/${pluginName}/${name}.md`,
+    pluginName,
+  };
+}
+
+describe('computePluginRollup', () => {
+  it('marks a plugin unused when none of its agents have any observed invocations', () => {
+    const activePlugins = [{ name: 'pkg', marketplace: 'mp', version: '1.0.0', installPath: '/fake/pkg' }];
+    const agents = [fakeAgent('agent-a', 'pkg'), fakeAgent('agent-b', 'pkg')];
+    const [entry] = computePluginRollup({}, agents, activePlugins);
+    expect(entry.status).toBe('unused');
+    expect(entry.agentCount).toBe(2);
+    expect(entry.usedCount).toBe(0);
+    expect(entry.unusedAgents.sort()).toEqual(['agent-a', 'agent-b']);
+  });
+
+  it('marks a plugin used when at least one agent has a direct observed invocation', () => {
+    const activePlugins = [{ name: 'pkg', marketplace: 'mp', version: '1.0.0', installPath: '/fake/pkg' }];
+    const agents = [fakeAgent('agent-a', 'pkg'), fakeAgent('agent-b', 'pkg')];
+    const [entry] = computePluginRollup({ 'agent-a': 3 }, agents, activePlugins);
+    expect(entry.status).toBe('used');
+    expect(entry.usedCount).toBe(1);
+    expect(entry.unusedAgents).toEqual(['agent-b']);
+  });
+
+  it('marks a plugin used when an agent is only invoked via its `<plugin>:<name>` alias', () => {
+    // bare-name matching also counts as used — this is intentionally the safe
+    // direction (an unrelated same-named user agent could false-positive this
+    // to "used"), which only means we under-report uninstall candidates, never
+    // wrongly flag an in-use plugin as safe to remove.
+    const activePlugins = [{ name: 'pkg', marketplace: 'mp', version: '1.0.0', installPath: '/fake/pkg' }];
+    const agents = [fakeAgent('agent-a', 'pkg')];
+    const [entry] = computePluginRollup({ 'pkg:agent-a': 7 }, agents, activePlugins);
+    expect(entry.status).toBe('used');
+    expect(entry.usedCount).toBe(1);
+    expect(entry.unusedAgents).toEqual([]);
+  });
+
+  it('marks a plugin no-agents (excluded from unused/used judgement) when it ships zero agents', () => {
+    const activePlugins = [{ name: 'pkg', marketplace: 'mp', version: '1.0.0', installPath: '/fake/pkg' }];
+    const [entry] = computePluginRollup({}, [], activePlugins);
+    expect(entry.status).toBe('no-agents');
+    expect(entry.agentCount).toBe(0);
+  });
+
+  it('returns an empty array for an empty plugin list', () => {
+    expect(computePluginRollup({}, [], [])).toEqual([]);
   });
 });

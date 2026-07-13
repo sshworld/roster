@@ -219,7 +219,7 @@ assert_contains "$out8c" "roster drift" "override: advisory on watched dir chang
 assert_contains "$out8c" "watched" "override: advisory names watched dir"
 rm -rf "$tmp8"
 
-# 9. v1 snapshot (no version header) -> upgraded silently, no advisory, rewritten as v2
+# 9. v1 snapshot (no version header) -> upgraded silently, no advisory, rewritten as v3
 tmp9="$(mktemp -d)"
 mkdir -p "${tmp9}/project/.claude/agents" "${tmp9}/home/.cache/roster"
 cat > "${tmp9}/project/.claude/agents/one.md" <<'EOF'
@@ -238,8 +238,157 @@ code9=$?
 assert_exit_zero "$code9" "v1 snapshot upgrade: exit 0"
 assert_empty "$out9" "v1 snapshot upgrade: no advisory"
 version_line9="$(head -n 1 "$snap9")"
-assert_contains "$version_line9" "v2" "v1 snapshot upgrade: snapshot rewritten as v2"
+assert_contains "$version_line9" "v3" "v1 snapshot upgrade: snapshot rewritten as v3"
 rm -rf "$tmp9"
+
+# 10. same-size content edit -> advisory (content fingerprint, not just byte size)
+tmp10="$(setup_project)"
+cat > "${tmp10}/project/.claude/agents/same-size.md" <<'EOF'
+---
+name: same-size
+description: aaaa
+---
+body
+EOF
+out10a="$(cd "${tmp10}/project" && HOME="${tmp10}/home" bash "$HOOK" 2>&1)"
+code10a=$?
+assert_exit_zero "$code10a" "same-size edit: first run exit 0"
+out10b="$(cd "${tmp10}/project" && HOME="${tmp10}/home" bash "$HOOK" 2>&1)"
+code10b=$?
+assert_exit_zero "$code10b" "same-size edit: settle run exit 0"
+assert_empty "$out10b" "same-size edit: settle run no advisory"
+# same byte count, different content ("aaaa" -> "bbbb")
+sed -i.bak 's/aaaa/bbbb/' "${tmp10}/project/.claude/agents/same-size.md"
+rm -f "${tmp10}/project/.claude/agents/same-size.md.bak"
+out10c="$(cd "${tmp10}/project" && HOME="${tmp10}/home" bash "$HOOK" 2>&1)"
+code10c=$?
+assert_exit_zero "$code10c" "same-size edit: after edit exit 0"
+assert_contains "$out10c" "roster drift" "same-size edit: advisory on content-only change"
+rm -rf "$tmp10"
+
+# 11. nested subdir add -> advisory (recursive watch, not just -maxdepth 1)
+tmp11="$(setup_project)"
+cat > "${tmp11}/project/.claude/agents/top.md" <<'EOF'
+---
+name: top
+description: top-level agent
+---
+body
+EOF
+out11a="$(cd "${tmp11}/project" && HOME="${tmp11}/home" bash "$HOOK" 2>&1)"
+code11a=$?
+assert_exit_zero "$code11a" "nested add: first run exit 0"
+out11b="$(cd "${tmp11}/project" && HOME="${tmp11}/home" bash "$HOOK" 2>&1)"
+code11b=$?
+assert_exit_zero "$code11b" "nested add: settle run exit 0"
+assert_empty "$out11b" "nested add: settle run no advisory"
+mkdir -p "${tmp11}/project/.claude/agents/sub"
+cat > "${tmp11}/project/.claude/agents/sub/nested.md" <<'EOF'
+---
+name: nested
+description: nested agent
+---
+body
+EOF
+out11c="$(cd "${tmp11}/project" && HOME="${tmp11}/home" bash "$HOOK" 2>&1)"
+code11c=$?
+assert_exit_zero "$code11c" "nested add: after add exit 0"
+assert_contains "$out11c" "roster drift" "nested add: advisory on nested subdir add"
+rm -rf "$tmp11"
+
+# 12. agent removal -> advisory (delta -lt 0 branch)
+tmp12="$(setup_project)"
+cat > "${tmp12}/project/.claude/agents/keep.md" <<'EOF'
+---
+name: keep
+description: stays
+---
+body
+EOF
+cat > "${tmp12}/project/.claude/agents/remove-me.md" <<'EOF'
+---
+name: remove-me
+description: goes away
+---
+body
+EOF
+out12a="$(cd "${tmp12}/project" && HOME="${tmp12}/home" bash "$HOOK" 2>&1)"
+code12a=$?
+assert_exit_zero "$code12a" "removal: first run exit 0"
+out12b="$(cd "${tmp12}/project" && HOME="${tmp12}/home" bash "$HOOK" 2>&1)"
+code12b=$?
+assert_exit_zero "$code12b" "removal: settle run exit 0"
+assert_empty "$out12b" "removal: settle run no advisory"
+rm -f "${tmp12}/project/.claude/agents/remove-me.md"
+out12c="$(cd "${tmp12}/project" && HOME="${tmp12}/home" bash "$HOOK" 2>&1)"
+code12c=$?
+assert_exit_zero "$code12c" "removal: after remove exit 0"
+assert_contains "$out12c" "roster drift" "removal: advisory on agent removal"
+rm -rf "$tmp12"
+
+# 13. filename with spaces -> no false advisory unchanged, real advisory when changed
+tmp13="$(setup_project)"
+cat > "${tmp13}/project/.claude/agents/my agent.md" <<'EOF'
+---
+name: my-agent
+description: has a space in its filename
+---
+body
+EOF
+out13a="$(cd "${tmp13}/project" && HOME="${tmp13}/home" bash "$HOOK" 2>&1)"
+code13a=$?
+assert_exit_zero "$code13a" "spaced filename: first run exit 0"
+out13b="$(cd "${tmp13}/project" && HOME="${tmp13}/home" bash "$HOOK" 2>&1)"
+code13b=$?
+assert_exit_zero "$code13b" "spaced filename: settle run exit 0"
+assert_empty "$out13b" "spaced filename: unchanged no advisory"
+cat > "${tmp13}/project/.claude/agents/my agent.md" <<'EOF'
+---
+name: my-agent
+description: has a space in its filename, now edited
+---
+body
+EOF
+out13c="$(cd "${tmp13}/project" && HOME="${tmp13}/home" bash "$HOOK" 2>&1)"
+code13c=$?
+assert_exit_zero "$code13c" "spaced filename: after edit exit 0"
+assert_contains "$out13c" "roster drift" "spaced filename: advisory on real change"
+rm -rf "$tmp13"
+
+# 14. v2 snapshot (header "v2", old "<path> <size>" lines) -> silent upgrade to v3,
+# no advisory; then a real change afterwards produces a normal advisory
+# (upgrade leaves the snapshot functional for future drift detection).
+tmp14="$(setup_project)"
+cat > "${tmp14}/project/.claude/agents/one.md" <<'EOF'
+---
+name: one
+description: pre-existing agent
+---
+body
+EOF
+repo_hash14="$(printf '%s' "${tmp14}/project" | cksum | awk '{print $1}')"
+snap14="${tmp14}/home/.cache/roster/drift-${repo_hash14}.snap"
+mkdir -p "${tmp14}/home/.cache/roster"
+size14="$(wc -c < "${tmp14}/project/.claude/agents/one.md" | tr -d ' ')"
+{ printf 'v2\n'; printf '.claude/agents/one.md %s\n' "$size14"; } > "$snap14"
+out14a="$(cd "${tmp14}/project" && HOME="${tmp14}/home" bash "$HOOK" 2>&1)"
+code14a=$?
+assert_exit_zero "$code14a" "v2 snapshot upgrade: exit 0"
+assert_empty "$out14a" "v2 snapshot upgrade: no advisory"
+version_line14="$(head -n 1 "$snap14")"
+assert_contains "$version_line14" "v3" "v2 snapshot upgrade: snapshot rewritten as v3"
+cat > "${tmp14}/project/.claude/agents/one.md" <<'EOF'
+---
+name: one
+description: pre-existing agent, now changed
+---
+body
+EOF
+out14b="$(cd "${tmp14}/project" && HOME="${tmp14}/home" bash "$HOOK" 2>&1)"
+code14b=$?
+assert_exit_zero "$code14b" "v2 snapshot upgrade: after real change exit 0"
+assert_contains "$out14b" "roster drift" "v2 snapshot upgrade: normal advisory after upgrade"
+rm -rf "$tmp14"
 
 echo ""
 echo "=== summary: ${pass} passed, ${fail} failed ==="

@@ -41,16 +41,17 @@ Once installed:
   use. Joins your transcript history against the roster to surface unused
   agents and ghost invocations, and points you at `/roster-cleanup` when
   dead weight shows up.
-- **`roster-drift.sh` hook** (`SessionStart`) — on each session, diffs the
-  watched agent-md dir(s) against a cached snapshot and emits a short
-  advisory if agents were added/removed/changed
-  (`ROSTER_DRIFT_DISABLE=1` to opt out). By default it watches
-  `.claude/agents` plus, in a plugin-layout repo (one with a top-level
-  `.claude-plugin/plugin.json`), the root `agents/` dir; override with
-  `ROSTER_DRIFT_DIR` (colon-separated dir list). The advisory is injected
-  into Claude's session context along with a relay directive, so Claude
-  surfaces it to you in its first response of the session. Advisory only —
-  never blocks a session.
+- **`roster-drift.sh` hook** (`SessionStart`) — on each session, content-
+  fingerprints (checksum, not just size) the watched agent-md dir(s)
+  recursively against a cached snapshot and emits a short advisory if agents
+  were added/removed/changed (`ROSTER_DRIFT_DISABLE=1` to opt out). By
+  default it watches `.claude/agents` plus, in a plugin-layout repo (one with
+  a top-level `.claude-plugin/plugin.json`), the root `agents/` dir; override
+  with `ROSTER_DRIFT_DIR` (colon-separated dir list). The scan follows
+  symlinks and prunes `node_modules`/`.git`. The advisory is injected into
+  Claude's session context along with a relay directive, so Claude surfaces
+  it to you in its first response of the session. Advisory only — never
+  blocks a session.
 
 ### Standalone CLI
 

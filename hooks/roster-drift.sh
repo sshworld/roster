@@ -1,24 +1,31 @@
 #!/usr/bin/env bash
 # hooks/roster-drift.sh — SessionStart resident guard for roster.
 #
-# Compares the current project's watched agent-md dir(s) file list + size
-# fingerprint against a cached snapshot (`~/.cache/roster/drift-<repo-hash>.snap`).
-# When drift is detected it prints a short advisory plus a relay directive to
-# stdout (feeds Claude's SessionStart session context — the directive tells
-# Claude to relay the advisory to the user, since a plain-text advisory can
-# otherwise go unmentioned), and duplicates the bare advisory to stderr
-# (harmless, though not user-visible from an exit-0 SessionStart hook), and
-# refreshes the snapshot. No drift -> no output. Always exits 0 (advisory
-# only, never blocks). Uses only bash + find/wc/cksum/awk — no node/npx
-# required.
+# Compares the current project's watched agent-md dir(s) file list + content
+# fingerprint (recursive, checksum-based) against a cached snapshot
+# (`~/.cache/roster/drift-<repo-hash>.snap`). When drift is detected it prints
+# a short advisory plus a relay directive to stdout (feeds Claude's
+# SessionStart session context — the directive tells Claude to relay the
+# advisory to the user, since a plain-text advisory can otherwise go
+# unmentioned), and duplicates the bare advisory to stderr (harmless, though
+# not user-visible from an exit-0 SessionStart hook), and refreshes the
+# snapshot. No drift -> no output. Always exits 0 (advisory only, never
+# blocks). Uses only bash + find/cksum/awk/coreutils — no node/npx required;
+# works on macOS (BSD) and Linux.
 #
-# Watched dirs:
+# Watched dirs (searched recursively, symlinks followed, node_modules/.git
+# pruned):
 #   - ROSTER_DRIFT_DIR set: colon-separated dir list, existing dirs only.
 #   - otherwise: `.claude/agents` (if present) + `agents` (if this repo has a
 #     `.claude-plugin/plugin.json`, i.e. a plugin-layout repo, and `agents/` exists).
 #   - zero watched dirs -> silent exit 0 (unchanged from before).
 #
 # Bypass: ROSTER_DRIFT_DISABLE=1 <session> — suppresses all output (still exits 0).
+#
+# Known pre-existing limitations, kept as-is:
+#   - WATCH_DIRS is word-split (unquoted `for _d in $WATCH_DIRS`), so watched-dir
+#     paths containing spaces or colons break.
+#   - Overlapping override dirs (e.g. `ROSTER_DRIFT_DIR=a:a/sub`) double-count files.
 set -uo pipefail
 
 [ -n "${ROSTER_DRIFT_DISABLE:-}" ] && exit 0
@@ -48,20 +55,22 @@ repo_root="$(pwd)"
 repo_hash="$(printf '%s' "$repo_root" | cksum | awk '{print $1}')"
 SNAPSHOT="${CACHE_DIR}/drift-${repo_hash}.snap"
 
-# Build a fingerprint: one line per agent .md file, "<dir>/<name> <size>", sorted
-# per watched dir and concatenated in watch-dir order.
+# Build a fingerprint: one line per agent .md file, "<path> <cksum-output>"
+# (cksum output is itself "<checksum> <size>"), sorted per watched dir
+# (LC_ALL=C so a locale change between sessions can't produce fake drift) and
+# concatenated in watch-dir order. Recursive, follows symlinks, prunes
+# node_modules/.git.
 current_fingerprint="$(
   for _d in $WATCH_DIRS; do
-    find "$_d" -maxdepth 1 -type f -name '*.md' 2>/dev/null | sort
+    find -L "$_d" \( -name node_modules -o -name .git \) -prune -o -type f -name '*.md' -print 2>/dev/null | LC_ALL=C sort
   done | while IFS= read -r f; do
-    size="$(wc -c < "$f" 2>/dev/null | tr -d ' ')"
-    printf '%s %s\n' "$f" "$size"
+    printf '%s %s\n' "$f" "$(cksum < "$f" 2>/dev/null)"
   done
 )"
 current_count="$(printf '%s\n' "$current_fingerprint" | grep -c . || true)"
 
 write_snapshot() {
-  { printf 'v2\n'; printf '%s\n' "$current_fingerprint"; } > "$SNAPSHOT"
+  { printf 'v3\n'; printf '%s\n' "$current_fingerprint"; } > "$SNAPSHOT"
 }
 
 if [ ! -f "$SNAPSHOT" ]; then
@@ -70,9 +79,10 @@ if [ ! -f "$SNAPSHOT" ]; then
 fi
 
 snapshot_version="$(head -n 1 "$SNAPSHOT" 2>/dev/null)"
-if [ "$snapshot_version" != "v2" ]; then
-  # Pre-v2 snapshot format (no version header): upgrade silently, no advisory —
-  # otherwise every repo would see a one-time fake drift right after the upgrade.
+if [ "$snapshot_version" != "v3" ]; then
+  # Pre-v3 snapshot format (headerless v1, or v2 size-only fingerprint):
+  # upgrade silently, no advisory — otherwise every repo would see a one-time
+  # fake drift right after the upgrade.
   write_snapshot
   exit 0
 fi

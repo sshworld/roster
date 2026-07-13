@@ -4,6 +4,7 @@ import { createInterface } from 'node:readline';
 import os from 'node:os';
 import path from 'node:path';
 import { sources } from './sources/index.js';
+import { bold, red, yellow, supportsColor } from './render/ansi.js';
 
 interface ParsedArgs {
   days: number;
@@ -201,26 +202,32 @@ async function loadRosterNames(
   return { names: [...names], aliases };
 }
 
-function renderHuman(days: number, counts: Record<string, number>, unused: string[], ghosts: string[]): string {
+function renderHuman(
+  days: number,
+  counts: Record<string, number>,
+  unused: string[],
+  ghosts: string[],
+  color: boolean
+): string {
   const lines: string[] = [];
   const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 
   if (rows.length === 0) {
     lines.push(`No agent invocations found in the last ${days} day(s).`);
   } else {
-    lines.push(`Agent usage (last ${days} day(s)):`);
+    lines.push(bold(`Agent usage (last ${days} day(s)):`, color));
     for (const [name, count] of rows) {
       lines.push(`  ${count}\t${name}`);
     }
   }
 
   if (unused.length > 0) {
-    lines.push('Unused (in roster, 0 invocations):');
+    lines.push(yellow('Unused (in roster, 0 invocations):', color));
     for (const name of unused) lines.push(`  ${name}`);
   }
 
   if (ghosts.length > 0) {
-    lines.push('Ghost subagent_type (invoked, not in roster):');
+    lines.push(red('Ghost subagent_type (invoked, not in roster):', color));
     for (const name of ghosts) lines.push(`  ${name}`);
   }
 
@@ -263,7 +270,7 @@ export async function run(argv: string[]): Promise<number> {
   if (parsed.json) {
     console.log(JSON.stringify({ days: parsed.days, counts, unused, ghosts }));
   } else {
-    console.log(renderHuman(parsed.days, counts, unused, ghosts));
+    console.log(renderHuman(parsed.days, counts, unused, ghosts, supportsColor()));
   }
 
   return 0;

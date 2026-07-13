@@ -51,6 +51,7 @@ export interface Rule {
 }
 
 export interface RendererOptions {
+  color?: boolean;
   [key: string]: unknown;
 }
 

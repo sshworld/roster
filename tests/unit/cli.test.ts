@@ -67,6 +67,31 @@ describe('cli main()', () => {
     expect(printed.toLowerCase()).toContain('overlap');
   });
 
+  it('emits ANSI escapes when FORCE_COLOR is set', async () => {
+    vi.stubEnv('FORCE_COLOR', '1');
+    try {
+      const code = await main(['audit', fixtureDir, '--no-fail']);
+      expect(code).toBe(0);
+      const printed = logSpy.mock.calls.map((c) => c[0]).join('\n');
+      expect(printed).toContain('\x1b[');
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('emits no ANSI escapes without color env stubs (non-TTY)', async () => {
+    const originalIsTTY = process.stdout.isTTY;
+    Object.defineProperty(process.stdout, 'isTTY', { value: undefined, configurable: true });
+    try {
+      const code = await main(['audit', fixtureDir, '--no-fail']);
+      expect(code).toBe(0);
+      const printed = logSpy.mock.calls.map((c) => c[0]).join('\n');
+      expect(printed).not.toContain('\x1b[');
+    } finally {
+      Object.defineProperty(process.stdout, 'isTTY', { value: originalIsTTY, configurable: true });
+    }
+  });
+
   it('prints help and exits 0 for --help', async () => {
     const code = await main(['--help']);
     expect(code).toBe(0);

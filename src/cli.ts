@@ -6,6 +6,7 @@ import { rules } from './rules/index.js';
 import { renderers } from './render/index.js';
 import { run as runDoccheck } from './doccheck.js';
 import { run as runUsage } from './usage.js';
+import { supportsColor } from './render/ansi.js';
 
 interface ParsedArgs {
   dir?: string;
@@ -26,8 +27,8 @@ const HELP_TEXT = `Usage: roster <command> [<dir>] [options]
 
 Commands:
   audit                       Audit a roster for overlaps and issues
-  doccheck                    Check docs for drift (not yet implemented)
-  usage                       Report agent usage stats (not yet implemented)
+  doccheck                    Check docs for drift
+  usage                       Report agent usage stats
 
 Options:
   --json                      Output machine-readable JSON
@@ -204,7 +205,7 @@ export async function main(argv: string[]): Promise<number> {
     meta: { sourceLabels: [...new Set(agents.map((a) => a.sourceLabel))] },
   };
 
-  const output = renderer.render(report, {});
+  const output = renderer.render(report, { color: supportsColor() });
   if (rendererId === 'html') {
     writeFileSync(parsed.html!, output);
     console.log(`HTML report written: ${parsed.html}`);

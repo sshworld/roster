@@ -17,6 +17,43 @@ they burn context in production.
 
 ## Install
 
+roster ships as a Claude Code plugin — a resident guard instead of a
+one-off report.
+
+Install via the bundled marketplace manifest:
+
+```sh
+/plugin marketplace add sshworld/roster
+/plugin install roster
+```
+
+Once installed:
+
+- **`roster-audit` skill** — triggers when you ask to audit an agent roster
+  (overlap, missing harness/tools, routing ambiguity, cost); runs the bundled
+  CLI and explains how to read the findings.
+- **`roster-cleanup` skill** — triggers when you ask to clean up, prune, or
+  merge agents. Audits, classifies findings into concrete actions (delete /
+  move / merge / rename / uninstall / narrow tools), asks you to approve each
+  destructive step, executes only what you approved, then re-audits and
+  reports the delta.
+- **`roster-usage` skill** — triggers when you ask which agents you actually
+  use. Joins your transcript history against the roster to surface unused
+  agents and ghost invocations, and points you at `/roster-cleanup` when
+  dead weight shows up.
+- **`roster-drift.sh` hook** (`SessionStart`) — on each session, diffs the
+  watched agent-md dir(s) against a cached snapshot and emits a short
+  advisory if agents were added/removed/changed
+  (`ROSTER_DRIFT_DISABLE=1` to opt out). By default it watches
+  `.claude/agents` plus, in a plugin-layout repo (one with a top-level
+  `.claude-plugin/plugin.json`), the root `agents/` dir; override with
+  `ROSTER_DRIFT_DIR` (colon-separated dir list). The advisory is injected
+  into Claude's session context along with a relay directive, so Claude
+  surfaces it to you in its first response of the session. Advisory only —
+  never blocks a session.
+
+### Standalone CLI
+
 ```sh
 npm i -g roster-cli
 ```
@@ -30,6 +67,8 @@ npx roster-cli audit <dir>
 ## Usage
 
 roster is one binary with three commands: `audit`, `doccheck`, and `usage`.
+The same commands are also available through the plugin skills —
+`/roster-audit`, `/roster-usage`, `/roster-cleanup`.
 
 ```sh
 roster audit <dir>
@@ -134,39 +173,6 @@ upstream HEAD and pushes any changes straight to `main`.[^leaderboard-cron]
 Several top pairs score at or near 1.000 similarity (e.g. wshobson/agents has
 five pairs at a perfect 1.000) — these are near-duplicate agent files (same
 description/body reused across roles), not incidental topic overlap.
-
-## Use as a Claude Code plugin
-
-roster also ships as a Claude Code plugin — a resident guard instead of a
-one-off report.
-
-Install via the bundled marketplace manifest:
-
-```sh
-/plugin marketplace add sshworld/roster
-/plugin install roster
-```
-
-Once installed:
-
-- **`roster-audit` skill** — triggers when you ask to audit an agent roster
-  (overlap, missing harness/tools, routing ambiguity, cost); runs the bundled
-  CLI and explains how to read the findings.
-- **`roster-cleanup` skill** — triggers when you ask to clean up, prune, or
-  merge agents. Audits, classifies findings into concrete actions (delete /
-  move / merge / rename / uninstall / narrow tools), asks you to approve each
-  destructive step, executes only what you approved, then re-audits and
-  reports the delta.
-- **`roster-drift.sh` hook** (`SessionStart`) — on each session, diffs the
-  watched agent-md dir(s) against a cached snapshot and emits a short
-  advisory if agents were added/removed/changed
-  (`ROSTER_DRIFT_DISABLE=1` to opt out). By default it watches
-  `.claude/agents` plus, in a plugin-layout repo (one with a top-level
-  `.claude-plugin/plugin.json`), the root `agents/` dir; override with
-  `ROSTER_DRIFT_DIR` (colon-separated dir list). The advisory is injected
-  into Claude's session context along with a relay directive, so Claude
-  surfaces it to you in its first response of the session. Advisory only —
-  never blocks a session.
 
 ## Contributing
 

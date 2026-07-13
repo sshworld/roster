@@ -1,6 +1,6 @@
 {
   "name": "roster-cli",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Zero-runtime-dep static auditor for Claude Code agent rosters — overlap, harness gaps, routing, cost.",
   "type": "module",
   "bin": {

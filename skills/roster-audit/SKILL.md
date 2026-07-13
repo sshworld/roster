@@ -44,7 +44,7 @@ npx roster-cli audit <dir>
 
 ## Interpreting results
 
-- **`overlap` findings, score >= 0.6`**: two agents/skills likely cover the
+- **`overlap` findings, score >= 0.6**: two agents/skills likely cover the
   same responsibility — treat as a signal to merge, split trigger conditions,
   or route explicitly. Scores at or near 1.0 usually mean near-duplicate
   files (same description/body reused), not just topical overlap.

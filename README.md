@@ -68,8 +68,9 @@ npx roster-cli audit <dir>
 ## Usage
 
 roster is one binary with three commands: `audit`, `doccheck`, and `usage`.
-The same commands are also available through the plugin skills —
-`/roster-audit`, `/roster-usage`, `/roster-cleanup`.
+The plugin wraps `audit` and `usage` as the `/roster-audit` and
+`/roster-usage` skills, and adds `/roster-cleanup` — a skill-only
+interactive workflow built on top of both. `doccheck` is CLI-only.
 
 ```sh
 roster audit <dir>

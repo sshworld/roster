@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" width="720" role="img" aria-label="roster audit terminal output">
+  <rect x="0" y="0" width="720" height="400" rx="12" fill="#1c1c22"/>
+  <circle cx="24" cy="20" r="6" fill="#e74c3c"/>
+  <circle cx="44" cy="20" r="6" fill="#f1c40f"/>
+  <circle cx="64" cy="20" r="6" fill="#8b8b95"/>
+  <text x="20" y="56" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" xml:space="preserve">
+    <tspan x="20" dy="1.4em" fill="#ffffff" font-weight="bold">Roster Audit Report</tspan>
+    <tspan x="20" dy="1.4em" fill="#ffffff">Agents scanned: 6</tspan>
+    <tspan x="20" dy="1.4em" fill="#ffffff">Sources: dir:tests/fixtures/roster-a</tspan>
+    <tspan x="20" dy="1.4em" fill="#ffffff"> </tspan>
+    <tspan x="20" dy="1.4em" fill="#ffffff" font-weight="bold">Top overlapping pairs (10):</tspan>
+    <tspan x="20" dy="1.4em" fill="#e74c3c">  0.911  code-critic &lt;-&gt; code-reviewer</tspan>
+    <tspan x="20" dy="1.4em" fill="#8b8b95">  0.278  code-reviewer &lt;-&gt; researcher</tspan>
+    <tspan x="20" dy="1.4em" fill="#8b8b95">  0.273  code-reviewer &lt;-&gt; planner</tspan>
+    <tspan x="20" dy="1.4em" fill="#8b8b95">  0.264  code-critic &lt;-&gt; researcher</tspan>
+    <tspan x="20" dy="1.4em" fill="#8b8b95">  0.249  code-reviewer &lt;-&gt; writer</tspan>
+    <tspan x="20" dy="1.4em" fill="#8b8b95">  0.248  code-critic &lt;-&gt; writer</tspan>
+    <tspan x="20" dy="1.4em" fill="#8b8b95">  0.243  code-critic &lt;-&gt; planner</tspan>
+    <tspan x="20" dy="1.4em" fill="#8b8b95">  0.212  designer &lt;-&gt; code-critic</tspan>
+    <tspan x="20" dy="1.4em" fill="#8b8b95">  0.209  designer &lt;-&gt; code-reviewer</tspan>
+    <tspan x="20" dy="1.4em" fill="#8b8b95">  0.203  planner &lt;-&gt; writer</tspan>
+    <tspan x="20" dy="1.4em" fill="#ffffff"> </tspan>
+    <tspan x="20" dy="1.4em" fill="#ffffff">Findings: 24 total (0 critical, 1 warning)</tspan>
+  </text>
+</svg>

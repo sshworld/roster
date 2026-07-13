@@ -2,6 +2,10 @@
 
 Does your agent earn its context?
 
+<img src="docs/assets/hero.svg" alt="roster audit terminal output" width="720">
+
+`roster audit` also renders a shareable HTML report with `--html` — [view a live sample report](https://sshworld.github.io/roster/demo/report.html).
+
 ## Philosophy
 
 Most agent tooling optimizes personas — tone, role-play, instructions. roster

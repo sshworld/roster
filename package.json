@@ -16,7 +16,8 @@
     "build": "tsc",
     "test": "vitest run",
     "prepublishOnly": "npm run build",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "demo:report": "node dist/cli.js audit tests/fixtures/roster-a --html docs/demo/report.html"
   },
   "devDependencies": {
     "typescript": "^5.6.3",

@@ -244,6 +244,37 @@ Several top pairs score at or near 1.000 similarity (e.g. wshobson/agents has
 five pairs at a perfect 1.000) — these are near-duplicate agent files (same
 description/body reused across roles), not incidental topic overlap.
 
+### Reading the table
+
+- **Agents** — real subagent definitions found (markdown with an explicit
+  frontmatter `name`; docs, skills, and command files are not counted).
+- **Top overlap pair** — highest TF-IDF cosine similarity between two agent
+  *descriptions*. The router picks a subagent by reading these descriptions,
+  so similar descriptions make routing a coin flip. Rough scale: **1.000** =
+  literally the same agent twice, **0.7+** = merge or differentiate,
+  **< 0.5** = healthy.
+- **No-tools %** — share of agents with no `tools` declaration. An agent
+  without one inherits *every* tool, so the model must guess its actual
+  capabilities and least-privilege is gone.
+- **Fixed cost** — estimated tokens injected into context **every turn** just
+  by having the roster registered, before any agent is invoked.
+
+### What to do about it
+
+In order of impact:
+
+1. **Delete unused agents** — `roster usage` joins your real invocation
+   history; agents you registered but never invoke are pure per-turn tax.
+   Fully-unused plugins are uninstall candidates (`roster usage --plugin`).
+2. **Merge or differentiate overlapping pairs** — a 1.000 pair means one is
+   dead weight; for 0.7–0.9 pairs, either merge them or rewrite the
+   descriptions so it's obvious *when to pick which one*. The
+   `/roster-cleanup` skill walks through this.
+3. **Declare `tools`** — give each agent the minimal set it actually needs
+   (a reviewer needs `Read, Grep, Bash`, not `Write`).
+4. **Diet the descriptions** — keep only what routing needs; a two-sentence
+   description routes as well as a three-paragraph bio and costs a fraction.
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).

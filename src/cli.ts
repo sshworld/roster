@@ -7,6 +7,7 @@ import { rules } from './rules/index.js';
 import { renderers } from './render/index.js';
 import { run as runDoccheck } from './doccheck.js';
 import { run as runUsage } from './usage.js';
+import { run as runMcp } from './mcp.js';
 import { supportsColor } from './render/ansi.js';
 
 interface ParsedArgs {
@@ -30,6 +31,7 @@ Commands:
   audit                       Audit a roster for overlaps and issues
   doccheck                    Check docs for drift
   usage                       Report agent usage stats
+  mcp                         Run an MCP server on stdio
 
 Options:
   --json                      Output machine-readable JSON
@@ -126,6 +128,7 @@ export async function main(argv: string[]): Promise<number> {
   const [cmd, ...rest] = argv;
   if (cmd === 'doccheck') return runDoccheck(rest);
   if (cmd === 'usage') return runUsage(rest);
+  if (cmd === 'mcp') return runMcp(rest);
   if (cmd !== 'audit') {
     console.error(`unknown command: ${cmd}`);
     console.error(HELP_TEXT);

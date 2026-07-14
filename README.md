@@ -102,6 +102,48 @@ active for the current project.[^enabled-only]
     winning and a key absent from all of them treated as enabled. This is
     audit-path only — `usage` does not take `--enabled-only`.
 
+## MCP server
+
+`roster mcp` runs a [Model Context Protocol](https://modelcontextprotocol.io)
+server on stdio, so any MCP client — Claude Code, Cursor, Codex CLI, MCP
+Inspector — can call `roster_audit`, `roster_usage`, and `roster_doccheck`
+directly as tools, without shelling out.
+
+```sh
+npm i -g roster-cli
+claude mcp add roster -- roster mcp
+```
+
+npx alternative (no global install):
+
+```sh
+claude mcp add roster -- npx -y roster-cli mcp
+```
+
+Cursor (`.cursor/mcp.json`):
+
+```json
+{ "mcpServers": { "roster": { "command": "roster", "args": ["mcp"] } } }
+```
+
+Codex CLI (`~/.codex/config.toml`):
+
+```toml
+[mcp_servers.roster]
+command = "roster"
+args = ["mcp"]
+```
+
+Prefer a global install over `npx` in MCP client configs — a cold `npx`
+download can exceed the client's startup timeout. Env vars like
+`ROSTER_CLAUDE_DIR` go in the MCP config's `env` block, not inline in `args`.
+
+**Scope.** roster parses markdown+frontmatter agent definitions (the Claude
+Code format), and `roster_usage` reads Claude Code transcript files.
+Adapters for other agent formats (Cursor rules, `AGENTS.md` packs) are on the
+roadmap. The MCP server doesn't change what roster understands — it makes
+that same analysis callable from any MCP client today.
+
 ## doccheck
 
 ```sh
@@ -167,7 +209,7 @@ Always exits `0` — this is a reporting tool, not a gate.
 | `harness` | Flags harness-incompatible or malformed configs | stable |
 | `routing` | Checks routing/trigger ambiguity between agents | stable |
 | `cost` | Estimates context/token cost of a roster | stable |
-| `fluff` | Flags low-signal, filler instructions | experimental |
+| `fluff` | Flags low-signal, filler instructions (bodies >20 lines) | experimental |
 
 ## Benchmarks
 

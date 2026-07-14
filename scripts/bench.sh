@@ -28,11 +28,14 @@ CLI="$ROOT_DIR/dist/cli.js"
 OUT_DIR="$ROOT_DIR/docs/benchmarks"
 TOP_N=15
 
-# owner/name@sha — SHA pinned via `git ls-remote https://github.com/<owner>/<name> HEAD`
+# owner/name@sha[:subdir] — SHA pinned via `git ls-remote https://github.com/<owner>/<name> HEAD`.
+# Optional :subdir scopes the audit to one directory (mixed repos where only a
+# subtree holds agent definitions — e.g. ECC keeps skills/docs alongside agents/).
 TARGETS=(
   "msitarzewski/agency-agents@9f3e401ccd09aa0ee0ef8e015226d0647908e01e"
   "wshobson/agents@d7cf7dca8c4c7d0635e284f77204daa85552bfa4"
   "contains-studio/agents@a5a480c324cac64b9c569bca0b2f297d517240cb"
+  "affaan-m/ECC@ed387446052dfbc6b52de149406b70efa65edc59:agents"
 )
 
 if [ ! -f "$CLI" ]; then
@@ -52,7 +55,7 @@ generated_date="$(date -u +%Y-%m-%d)"
 # bench.sh remains the single script file this slice is allowed to touch.
 render_report() {
   local json_file="$1" cli_file="$2"
-  REPO_SPEC="$repo_spec" SHA="$sha" OWNER="$owner" NAME="$name" \
+  REPO_SPEC="$repo_spec" SHA="$sha" OWNER="$owner" NAME="$name" SUBDIR="$subdir" \
     GENERATED_DATE="$generated_date" TOP_N="$TOP_N" \
     JSON_FILE="$json_file" CLI_FILE="$cli_file" \
     node --input-type=module -e '
@@ -60,7 +63,12 @@ import { readFileSync } from "node:fs";
 
 const report = JSON.parse(readFileSync(process.env.JSON_FILE, "utf8"));
 const cliText = readFileSync(process.env.CLI_FILE, "utf8").trimEnd();
-const { REPO_SPEC, SHA, OWNER, NAME, GENERATED_DATE, TOP_N } = process.env;
+const { REPO_SPEC, SHA, OWNER, NAME, SUBDIR, GENERATED_DATE, TOP_N } = process.env;
+// Repo label + reproduce commands carry the :subdir suffix so the documented
+// numbers are reproducible as written (a subdir-scoped audit of the full repo
+// spec would report different counts).
+const repoLabel = SUBDIR ? `${OWNER}/${NAME}:${SUBDIR}` : `${OWNER}/${NAME}`;
+const repoArg = SUBDIR ? `${OWNER}/${NAME}@${SHA}:${SUBDIR}` : `${OWNER}/${NAME}@${SHA}`;
 
 const findings = report.findings;
 const agentCount = report.agents.length;
@@ -85,9 +93,9 @@ const overlapTableRows = overlapByScore
   .join("\n");
 
 const lines = [];
-lines.push(`# Benchmark — ${OWNER}/${NAME}`);
+lines.push(`# Benchmark — ${repoLabel}`);
 lines.push("");
-lines.push(`- **Repo**: [${OWNER}/${NAME}](https://github.com/${OWNER}/${NAME})`);
+lines.push(`- **Repo**: [${repoLabel}](https://github.com/${OWNER}/${NAME})`);
 lines.push(`- **Pinned SHA**: \`${SHA}\``);
 lines.push(`- **Generated**: ${GENERATED_DATE}`);
 lines.push("");
@@ -109,8 +117,8 @@ lines.push("## Reproduce");
 lines.push("");
 lines.push("```sh");
 lines.push("npm run build");
-lines.push(`node dist/cli.js audit --repo ${OWNER}/${NAME}@${SHA} --no-fail --top ${TOP_N} --json`);
-lines.push(`node dist/cli.js audit --repo ${OWNER}/${NAME}@${SHA} --no-fail --top ${TOP_N}`);
+lines.push(`node dist/cli.js audit --repo ${repoArg} --no-fail --top ${TOP_N} --json`);
+lines.push(`node dist/cli.js audit --repo ${repoArg} --no-fail --top ${TOP_N}`);
 lines.push("```");
 lines.push("");
 lines.push("## CLI output");
@@ -125,11 +133,22 @@ process.stdout.write(lines.join("\n") + "\n");
 }
 
 for target in "${TARGETS[@]}"; do
-  repo_spec="${target%@*}"
-  sha="${target##*@}"
+  # Split an optional :subdir suffix BEFORE the @sha split — otherwise the
+  # sha would be contaminated ("<sha>:agents"). Targets without a colon are
+  # untouched by the case guard.
+  subdir=""
+  spec="$target"
+  case "$spec" in
+    *:*)
+      subdir="${spec#*:}"
+      spec="${spec%%:*}"
+      ;;
+  esac
+  repo_spec="${spec%@*}"
+  sha="${spec##*@}"
   owner="${repo_spec%%/*}"
   name="${repo_spec##*/}"
-  slug="${owner}--${name}"
+  slug="${owner}--${name}${subdir:+--${subdir//\//-}}"
 
   if [ "${BENCH_LATEST:-0}" = "1" ]; then
     latest_sha="$(git ls-remote "https://github.com/${repo_spec}.git" HEAD | cut -f1)"
@@ -140,20 +159,20 @@ for target in "${TARGETS[@]}"; do
     sha="$latest_sha"
   fi
 
-  echo "bench: auditing ${repo_spec}@${sha} ..." >&2
+  echo "bench: auditing ${repo_spec}@${sha}${subdir:+:$subdir} ..." >&2
 
   json_file="$TMP_DIR/${slug}.json"
   cli_file="$TMP_DIR/${slug}.cli.txt"
   err_file="$TMP_DIR/${slug}.err.txt"
 
-  if ! node "$CLI" audit --repo "${repo_spec}@${sha}" --no-fail --top "$TOP_N" --json \
+  if ! node "$CLI" audit --repo "${repo_spec}@${sha}${subdir:+:$subdir}" --no-fail --top "$TOP_N" --json \
       > "$json_file" 2> "$err_file"; then
     echo "bench: SKIP ${repo_spec} — audit (json) failed:" >&2
     cat "$err_file" >&2
     continue
   fi
 
-  if ! node "$CLI" audit --repo "${repo_spec}@${sha}" --no-fail --top "$TOP_N" \
+  if ! node "$CLI" audit --repo "${repo_spec}@${sha}${subdir:+:$subdir}" --no-fail --top "$TOP_N" \
       > "$cli_file" 2>> "$err_file"; then
     echo "bench: SKIP ${repo_spec} — audit (cli text) failed:" >&2
     cat "$err_file" >&2

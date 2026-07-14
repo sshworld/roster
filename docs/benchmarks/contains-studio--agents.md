@@ -6,31 +6,31 @@
 
 ## Summary
 
-- Agents scanned: **37**
-- Top overlap pair (of top 15): **content-creator <-> instagram-curator (0.565)**
-- No-harness agents (no tool restriction / wildcard tools): **6** (16.2% of roster)
+- Agents scanned: **32**
+- Top overlap pair (of top 15): **test-writer-fixer <-> test-results-analyzer (0.475)**
+- No-harness agents (no tool restriction / wildcard tools): **1** (3.1% of roster)
 - Roster fixed cost estimate: **~8421 tokens/turn**
-- Total findings: **115**
+- Total findings: **95**
 
 ## Top 15 overlapping pairs
 
 | Agent A | Agent B | Similarity |
 | --- | --- | --- |
-| content-creator | instagram-curator | 0.565 |
-| instagram-curator | twitter-engager | 0.458 |
-| test-writer-fixer | test-results-analyzer | 0.455 |
-| tiktok-strategist | trend-researcher | 0.429 |
-| frontend-developer | mobile-app-builder | 0.406 |
-| rapid-prototyper | trend-researcher | 0.398 |
-| instagram-curator | tiktok-strategist | 0.391 |
-| sprint-prioritizer | studio-producer | 0.379 |
-| project-shipper | studio-producer | 0.377 |
-| reddit-community-builder | twitter-engager | 0.370 |
-| infrastructure-maintainer | performance-benchmarker | 0.369 |
-| content-creator | twitter-engager | 0.368 |
-| api-tester | performance-benchmarker | 0.365 |
-| trend-researcher | project-shipper | 0.360 |
+| test-writer-fixer | test-results-analyzer | 0.475 |
+| tiktok-strategist | trend-researcher | 0.420 |
+| frontend-developer | mobile-app-builder | 0.394 |
+| rapid-prototyper | trend-researcher | 0.392 |
+| sprint-prioritizer | studio-producer | 0.383 |
+| project-shipper | studio-producer | 0.375 |
+| infrastructure-maintainer | performance-benchmarker | 0.370 |
+| api-tester | performance-benchmarker | 0.367 |
 | frontend-developer | rapid-prototyper | 0.359 |
+| studio-coach | studio-producer | 0.355 |
+| trend-researcher | project-shipper | 0.352 |
+| rapid-prototyper | experiment-tracker | 0.350 |
+| infrastructure-maintainer | api-tester | 0.349 |
+| ui-designer | frontend-developer | 0.349 |
+| rapid-prototyper | tiktok-strategist | 0.343 |
 
 ## Reproduce
 
@@ -44,26 +44,26 @@ node dist/cli.js audit --repo contains-studio/agents@a5a480c324cac64b9c569bca0b2
 
 ```
 Roster Audit Report
-Agents scanned: 37
+Agents scanned: 32
 Sources: github:contains-studio/agents@a5a480c324cac64b9c569bca0b2f297d517240cb
 
 Top overlapping pairs (15):
-  0.565  content-creator <-> instagram-curator
-  0.458  instagram-curator <-> twitter-engager
-  0.455  test-writer-fixer <-> test-results-analyzer
-  0.429  tiktok-strategist <-> trend-researcher
-  0.406  frontend-developer <-> mobile-app-builder
-  0.398  rapid-prototyper <-> trend-researcher
-  0.391  instagram-curator <-> tiktok-strategist
-  0.379  sprint-prioritizer <-> studio-producer
-  0.377  project-shipper <-> studio-producer
-  0.370  reddit-community-builder <-> twitter-engager
-  0.369  infrastructure-maintainer <-> performance-benchmarker
-  0.368  content-creator <-> twitter-engager
-  0.365  api-tester <-> performance-benchmarker
-  0.360  trend-researcher <-> project-shipper
+  0.475  test-writer-fixer <-> test-results-analyzer
+  0.420  tiktok-strategist <-> trend-researcher
+  0.394  frontend-developer <-> mobile-app-builder
+  0.392  rapid-prototyper <-> trend-researcher
+  0.383  sprint-prioritizer <-> studio-producer
+  0.375  project-shipper <-> studio-producer
+  0.370  infrastructure-maintainer <-> performance-benchmarker
+  0.367  api-tester <-> performance-benchmarker
   0.359  frontend-developer <-> rapid-prototyper
+  0.355  studio-coach <-> studio-producer
+  0.352  trend-researcher <-> project-shipper
+  0.350  rapid-prototyper <-> experiment-tracker
+  0.349  infrastructure-maintainer <-> api-tester
+  0.349  ui-designer <-> frontend-developer
+  0.343  rapid-prototyper <-> tiktok-strategist
 
-Findings: 115 total (0 critical, 11 warning)
+Findings: 95 total (0 critical, 1 warning)
 ```
 

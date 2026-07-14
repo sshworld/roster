@@ -1,13 +1,13 @@
 # Benchmark — msitarzewski/agency-agents
 
 - **Repo**: [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)
-- **Pinned SHA**: `9f3e401ccd09aa0ee0ef8e015226d0647908e01e`
-- **Generated**: 2026-07-10
+- **Pinned SHA**: `00fb28a4cf60a719363dce0de67fafc6301857ce`
+- **Generated**: 2026-07-14
 
 ## Summary
 
 - Agents scanned: **277**
-- Top overlap pair (of top 15): **Backend Architect <-> Backend Architect (0.878)**
+- Top overlap pair (of top 15): **Backend Architect (github:msitarzewski/agency-agents@00fb28a4cf60a719363dce0de67fafc6301857ce) <-> Backend Architect (github:msitarzewski/agency-agents@00fb28a4cf60a719363dce0de67fafc6301857ce) (0.878)**
 - No-harness agents (no tool restriction / wildcard tools): **260** (93.9% of roster)
 - Roster fixed cost estimate: **~14024 tokens/turn**
 - Total findings: **1099**
@@ -16,7 +16,7 @@
 
 | Agent A | Agent B | Similarity |
 | --- | --- | --- |
-| Backend Architect | Backend Architect | 0.878 |
+| Backend Architect (github:msitarzewski/agency-agents@00fb28a4cf60a719363dce0de67fafc6301857ce) | Backend Architect (github:msitarzewski/agency-agents@00fb28a4cf60a719363dce0de67fafc6301857ce) | 0.878 |
 | Evidence Collector | Reality Checker | 0.812 |
 | workflow-startup-mvp | workflow-with-memory | 0.740 |
 | workflow-book-chapter | Book Co-Author | 0.711 |
@@ -36,8 +36,8 @@
 
 ```sh
 npm run build
-node dist/cli.js audit --repo msitarzewski/agency-agents@9f3e401ccd09aa0ee0ef8e015226d0647908e01e --no-fail --top 15 --json
-node dist/cli.js audit --repo msitarzewski/agency-agents@9f3e401ccd09aa0ee0ef8e015226d0647908e01e --no-fail --top 15
+node dist/cli.js audit --repo msitarzewski/agency-agents@00fb28a4cf60a719363dce0de67fafc6301857ce --no-fail --top 15 --json
+node dist/cli.js audit --repo msitarzewski/agency-agents@00fb28a4cf60a719363dce0de67fafc6301857ce --no-fail --top 15
 ```
 
 ## CLI output
@@ -45,10 +45,10 @@ node dist/cli.js audit --repo msitarzewski/agency-agents@9f3e401ccd09aa0ee0ef8e0
 ```
 Roster Audit Report
 Agents scanned: 277
-Sources: github:msitarzewski/agency-agents@9f3e401ccd09aa0ee0ef8e015226d0647908e01e
+Sources: github:msitarzewski/agency-agents@00fb28a4cf60a719363dce0de67fafc6301857ce
 
 Top overlapping pairs (15):
-  0.878  Backend Architect <-> Backend Architect
+  0.878  Backend Architect (github:msitarzewski/agency-agents@00fb28a4cf60a719363dce0de67fafc6301857ce) <-> Backend Architect (github:msitarzewski/agency-agents@00fb28a4cf60a719363dce0de67fafc6301857ce)
   0.812  Evidence Collector <-> Reality Checker
   0.740  workflow-startup-mvp <-> workflow-with-memory
   0.711  workflow-book-chapter <-> Book Co-Author

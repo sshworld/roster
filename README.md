@@ -181,8 +181,8 @@ upstream HEAD and pushes any changes straight to `main`.[^leaderboard-cron]
 | Repo | Agents | Top overlap pair | No-tools % | Fixed cost |
 | --- | --- | --- | --- | --- |
 | [contains-studio/agents](https://github.com/contains-studio/agents) | 37 | content-creator <-> instagram-curator (0.565) | 16.2% | ~8421 tokens/turn |
-| [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents) | 277 | Backend Architect <-> Backend Architect (0.878) | 93.9% | ~14024 tokens/turn |
-| [wshobson/agents](https://github.com/wshobson/agents) | 691 | api-scaffolding-backend-architect <-> backend-api-security-backend-architect (1.000) | 97.8% | ~24853 tokens/turn |
+| [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents) | 277 | Backend Architect (github:msitarzewski/agency-agents@00fb28a4cf60a719363dce0de67fafc6301857ce) <-> Backend Architect (github:msitarzewski/agency-agents@00fb28a4cf60a719363dce0de67fafc6301857ce) (0.878) | 93.9% | ~14024 tokens/turn |
+| [wshobson/agents](https://github.com/wshobson/agents) | 689 | api-scaffolding-backend-architect <-> backend-api-security-backend-architect (1.000) | 97.8% | ~26216 tokens/turn |
 <!-- bench:end -->
 
 [^leaderboard-cron]: Runs every Monday via `.github/workflows/leaderboard.yml`.

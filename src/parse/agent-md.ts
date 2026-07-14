@@ -75,7 +75,7 @@ function renderBlockScalar(rawLines: string[], style: '>' | '|', chomp: '-' | '+
 }
 
 function splitFrontmatter(raw: string): { frontmatter: Frontmatter; body: string } {
-  const normalized = raw.replace(/\r\n/g, '\n');
+  const normalized = raw.replace(/^﻿/, '').replace(/\r\n/g, '\n');
   if (!normalized.startsWith('---\n') && normalized !== '---') {
     return { frontmatter: {}, body: normalized };
   }
@@ -159,6 +159,22 @@ function parseTools(raw: string | undefined): string[] | undefined {
 
 function fallbackName(filePath: string): string {
   return path.basename(filePath, path.extname(filePath));
+}
+
+const EXCLUDED_AGENT_SHAPED_BASENAMES = new Set(['skill.md', 'claude.md', 'agents.md']);
+
+/**
+ * A stricter predicate than parseAgentMarkdown's filename-fallback parsing:
+ * true only for files that declare themselves as an agent via an explicit,
+ * non-empty `name` frontmatter key, excluding basenames that are agent-shaped
+ * by convention but are not themselves agent definitions (skills, project docs).
+ */
+export function isAgentShaped(raw: string, filePath: string): boolean {
+  const { frontmatter } = splitFrontmatter(raw);
+  const name = frontmatter.name?.replace(/^['"]|['"]$/g, '').trim();
+  if (!name) return false;
+  const basename = path.basename(filePath).toLowerCase();
+  return !EXCLUDED_AGENT_SHAPED_BASENAMES.has(basename);
 }
 
 export function parseAgentMarkdown(raw: string, filePath: string, sourceLabel: string): AgentDef {

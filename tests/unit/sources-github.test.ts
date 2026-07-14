@@ -182,6 +182,112 @@ describe('githubSource', () => {
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
   });
+
+  it('applies a subdir scope (owner/name@ref:subdir), excluding paths outside it', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes('/git/trees/main')) {
+        return jsonResponse({
+          tree: [
+            { path: 'agents/remote.md', type: 'blob' },
+            { path: 'agents-extra/foo.md', type: 'blob' },
+            { path: 'other/remote.md', type: 'blob' },
+          ],
+          truncated: false,
+        });
+      }
+      if (url.startsWith('https://raw.githubusercontent.com/acme/agents/main/agents/remote.md')) {
+        return textResponse(AGENT_MD);
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    const agents = await githubSource.load({ repo: 'acme/agents@main:agents' });
+    expect(agents).toHaveLength(1);
+    expect(agents[0].filePath).toBe('agents/remote.md');
+    const fetchedUrls = fetchMock.mock.calls.map((c) => c[0] as string);
+    expect(fetchedUrls.some((u) => u.includes('agents-extra'))).toBe(false);
+  });
+
+  it('resolves the default branch when subdir is given without an explicit ref (owner/name:subdir)', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes('/repos/acme/agents') && !url.includes('/git/trees/')) {
+        return jsonResponse({ default_branch: 'main' });
+      }
+      if (url.includes('/git/trees/main')) {
+        return jsonResponse({ tree: [{ path: 'agents/remote.md', type: 'blob' }], truncated: false });
+      }
+      if (url.startsWith('https://raw.githubusercontent.com/acme/agents/main/agents/remote.md')) {
+        return textResponse(AGENT_MD);
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    const agents = await githubSource.load({ repo: 'acme/agents:agents' });
+    expect(agents).toHaveLength(1);
+    expect(agents[0].sourceLabel).toBe('github:acme/agents@main:agents');
+  });
+
+  it('parses a ref containing a slash (branch name) alongside a subdir', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes('/git/trees/feature/x')) {
+        return jsonResponse({ tree: [{ path: 'agents/remote.md', type: 'blob' }], truncated: false });
+      }
+      if (url.startsWith('https://raw.githubusercontent.com/acme/agents/feature/x/agents/remote.md')) {
+        return textResponse(AGENT_MD);
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    const agents = await githubSource.load({ repo: 'acme/agents@feature/x:agents' });
+    expect(agents).toHaveLength(1);
+    expect(agents[0].sourceLabel).toBe('github:acme/agents@feature/x:agents');
+  });
+
+  it('errors on a spec with a stray extra path segment (owner/extra/name)', async () => {
+    await expect(githubSource.load({ repo: 'acme/extra/agents' })).rejects.toThrow(/invalid repo spec/i);
+  });
+
+  it('skips non-agent-shaped markdown (no name frontmatter), counts the skip, and logs one stderr summary line', async () => {
+    const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes('/git/trees/')) {
+        return jsonResponse({
+          tree: [
+            { path: 'agents/remote.md', type: 'blob' },
+            { path: 'agents/notes.md', type: 'blob' },
+          ],
+          truncated: false,
+        });
+      }
+      if (url.includes('/agents/remote.md')) {
+        return textResponse(AGENT_MD);
+      }
+      if (url.includes('/agents/notes.md')) {
+        return textResponse('# Notes\n\nJust some notes, no frontmatter.');
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    const agents = await githubSource.load({ repo: 'acme/agents@main' });
+    expect(agents).toHaveLength(1);
+    expect((agents as unknown as { skippedNonAgentFiles?: number }).skippedNonAgentFiles).toBe(1);
+    const errors = warnSpy.mock.calls.map((c) => c[0] as string).join('\n');
+    expect(errors).toMatch(/skipped 1 non-agent markdown file/i);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    warnSpy.mockRestore();
+  });
+
+  it('includes the subdir in sourceLabel when one is used', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes('/git/trees/')) {
+        return jsonResponse({ tree: [{ path: 'agents/remote.md', type: 'blob' }], truncated: false });
+      }
+      return textResponse(AGENT_MD);
+    });
+
+    const agents = await githubSource.load({ repo: 'acme/agents@main:agents' });
+    expect(agents[0].sourceLabel).toBe('github:acme/agents@main:agents');
+  });
 });
 
 // Real-network smoke test — skipped unless explicitly opted in, to keep the unit

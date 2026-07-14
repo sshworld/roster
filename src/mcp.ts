@@ -34,7 +34,7 @@ const TOOLS = [
           type: 'boolean',
           description: 'With plugin, only include entries enabled for the current project.',
         },
-        repo: { type: 'string', description: 'GitHub roster to audit, as owner/name[@ref].' },
+        repo: { type: 'string', description: 'owner/name[@ref][:subdir] GitHub roster (subdir scopes the scan)' },
         cwd: {
           type: 'string',
           description: `Working directory for resolving relative paths and enabledOnly project detection. ${ABS_PATH_HINT}`,

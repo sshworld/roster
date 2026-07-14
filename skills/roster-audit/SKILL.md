@@ -36,9 +36,10 @@ npx roster-cli audit <dir>
 - **User-level agents**: add `--user` to also scan `~/.claude/agents`.
 - **Installed plugin agents**: add `--plugin [name]` to scan the plugin cache
   (all installed plugins, or a single one by name).
-- **A public GitHub repo of agents**: `--repo <owner/name[@ref]>` to audit a
-  roster you don't have checked out locally (e.g. for due diligence before
-  adopting a third-party agent pack).
+- **A public GitHub repo of agents**: `--repo <owner/name[@ref][:subdir]>` to
+  audit a roster you don't have checked out locally (e.g. for due diligence
+  before adopting a third-party agent pack); `:subdir` scopes the scan to one
+  directory in the repo.
 - Multiple sources can be combined in one run — each finding is tagged with
   its `sourceLabel` so mixed-origin audits stay attributable.
 

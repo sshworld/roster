@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { AgentDef, RosterSource } from '../core/types.js';
-import { parseAgentMarkdown } from '../parse/agent-md.js';
+import { isAgentShaped, parseAgentMarkdown } from '../parse/agent-md.js';
 
 // R0: well-known non-agent documentation basenames (extension stripped, case-insensitive).
 // Recursive scans previously misdetected these as "agents" and produced spurious overlap
@@ -57,12 +57,27 @@ export const dirSource: RosterSource = {
       }
       throw err;
     }
-    const agents = await Promise.all(
-      files.map(async (filePath) => {
-        const raw = await readFile(filePath, 'utf8');
-        return parseAgentMarkdown(raw, filePath, `dir:${dir}`);
-      })
+    const sourceLabel = `dir:${dir}`;
+    const read = await Promise.all(
+      files.map(async (filePath) => ({ raw: await readFile(filePath, 'utf8'), filePath }))
     );
+
+    let skippedNonAgentFiles = 0;
+    const agents: AgentDef[] & { skippedNonAgentFiles?: number } = [];
+    for (const { raw, filePath } of read) {
+      if (!isAgentShaped(raw, filePath)) {
+        skippedNonAgentFiles++;
+        continue;
+      }
+      agents.push(parseAgentMarkdown(raw, filePath, sourceLabel));
+    }
+
+    if (skippedNonAgentFiles > 0) {
+      console.error(
+        `roster: skipped ${skippedNonAgentFiles} non-agent markdown file(s) (no name frontmatter or excluded basename)`
+      );
+    }
+    agents.skippedNonAgentFiles = skippedNonAgentFiles;
 
     return agents;
   },

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseAgentMarkdown } from '../../src/parse/agent-md.js';
+import { parseAgentMarkdown, isAgentShaped } from '../../src/parse/agent-md.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixturesDir = path.join(__dirname, '../fixtures/parse');
@@ -94,5 +94,42 @@ describe('parseAgentMarkdown', () => {
     const filePath = path.join(fixturesDir, 'block-fallback-indent.md');
     const agent = parseAgentMarkdown(load('block-fallback-indent.md'), filePath, 'test');
     expect(agent.description).toBe('>2');
+  });
+});
+
+describe('isAgentShaped', () => {
+  it('is false when there is no frontmatter at all', () => {
+    expect(isAgentShaped('just a plain markdown body, no frontmatter', 'a/b.md')).toBe(false);
+  });
+
+  it('is true for frontmatter with a name but no description', () => {
+    expect(isAgentShaped('---\nname: my-agent\n---\nbody', 'a/b.md')).toBe(true);
+  });
+
+  it('is false for frontmatter with a description but no name', () => {
+    expect(isAgentShaped('---\ndescription: a command, not an agent\n---\nbody', 'a/b.md')).toBe(false);
+  });
+
+  it('is false when name is present but whitespace-only', () => {
+    expect(isAgentShaped('---\nname: "  "\n---\nbody', 'a/b.md')).toBe(false);
+  });
+
+  it.each(['SKILL.md', 'skill.md', 'CLAUDE.md', 'AGENTS.md'])(
+    'is false for excluded basename %s even with a valid name',
+    (basename) => {
+      expect(isAgentShaped('---\nname: my-agent\n---\nbody', `some/dir/${basename}`)).toBe(false);
+    }
+  );
+
+  it('strips a leading BOM before detecting frontmatter, and returns true', () => {
+    const raw = '﻿---\nname: bom-agent\n---\nbody';
+    expect(isAgentShaped(raw, 'a/b.md')).toBe(true);
+    expect(parseAgentMarkdown(raw, 'a/b.md', 'test').name).toBe('bom-agent');
+  });
+
+  it('is consistent with parseAgentMarkdown for a block-scalar name', () => {
+    const raw = '---\nname: >\n  folded-name\n---\nbody';
+    const agent = parseAgentMarkdown(raw, 'a/b.md', 'test');
+    expect(isAgentShaped(raw, 'a/b.md')).toBe(agent.name.trim().length > 0);
   });
 });

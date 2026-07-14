@@ -25,6 +25,7 @@ export interface Report {
   findings: Finding[];
   meta: {
     sourceLabels: string[];
+    skippedNonAgentFiles: number;
   };
 }
 

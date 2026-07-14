@@ -75,7 +75,7 @@ interactive workflow built on top of both. `doccheck` is CLI-only.
 ```sh
 roster audit <dir>
 roster audit <dir> --user
-roster audit <dir> --repo owner/name
+roster audit <dir> --repo owner/name[@ref][:subdir]
 roster audit <dir> --html report.html
 roster audit --plugin --enabled-only
 roster doccheck README.md
@@ -86,7 +86,7 @@ Full flag surface for `audit`:
 
 ```
 roster audit <dir> [--json] [--html <out>] [--user] [--plugin [name]]
-                    [--enabled-only] [--repo <owner/name[@ref]>] [--top <n>]
+                    [--enabled-only] [--repo <owner/name[@ref][:subdir]>] [--top <n>]
                     [--fail-above <s>] [--no-fail]
 ```
 
@@ -101,6 +101,13 @@ active for the current project.[^enabled-only]
     at-or-above cwd that has a `.claude/settings.json`, with later files
     winning and a key absent from all of them treated as enabled. This is
     audit-path only — `usage` does not take `--enabled-only`.
+
+**What counts as an agent.** `--repo` and `<dir>` scans ingest a markdown
+file only if it has frontmatter with a non-empty `name`; `description` is
+recommended but not required. Files named `SKILL.md`, `CLAUDE.md`, or
+`AGENTS.md` are excluded by basename even if they carry a `name` key.
+Collections that rely on a filename-only naming convention (no `name` key
+in frontmatter) are not ingested by repo/dir sweeps.
 
 ## MCP server
 

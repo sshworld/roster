@@ -7,6 +7,7 @@ import { main } from '../../src/cli.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixtureDir = path.join(__dirname, '../fixtures/roster-a');
+const agentShapedFixtureDir = path.join(__dirname, '../fixtures/agent-shaped-dir');
 
 describe('cli main()', () => {
   let logSpy: ReturnType<typeof vi.spyOn>;
@@ -39,6 +40,15 @@ describe('cli main()', () => {
     const parsed = JSON.parse(printed);
     expect(parsed.findings).toBeDefined();
     expect(parsed.agents.length).toBeGreaterThan(0);
+    expect(parsed.meta.skippedNonAgentFiles).toBe(0);
+  });
+
+  it('reports meta.skippedNonAgentFiles when non-agent-shaped markdown is skipped', async () => {
+    const code = await main(['audit', agentShapedFixtureDir, '--json', '--no-fail']);
+    expect(code).toBe(0);
+    const printed = logSpy.mock.calls.map((c) => c[0]).join('\n');
+    const parsed = JSON.parse(printed);
+    expect(parsed.meta.skippedNonAgentFiles).toBe(2);
   });
 
   it('writes a self-contained HTML report with --html <out>', async () => {

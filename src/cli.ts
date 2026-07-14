@@ -40,7 +40,8 @@ Options:
   --plugin [name]             Load agents from the plugin cache
   --enabled-only              With --plugin, only include entries active for the current project
                               (installation scope) AND enabled in settings.json/settings.local.json
-  --repo <owner/name[@ref]>   Load agents from a GitHub repo
+  --repo <owner/name[@ref][:subdir]>
+                              Load agents from a GitHub repo (subdir scopes the scan)
   --top <n>                   Number of top overlapping pairs to report (default 10)
   --fail-above <score>        Mark overlap findings above <score> as critical
   --no-fail                   Always exit 0, even with critical findings
@@ -177,6 +178,7 @@ export async function main(argv: string[]): Promise<number> {
   }
 
   const agents: AgentDef[] = [];
+  let skippedNonAgentFiles = 0;
   for (const sourceId of wanted) {
     const source = sources[sourceId];
     if (!source) {
@@ -187,14 +189,14 @@ export async function main(argv: string[]): Promise<number> {
       console.error(`not implemented: source '${sourceId}'`);
       return 2;
     }
-    agents.push(
-      ...(await source.load({
-        dir: parsed.dir,
-        pluginName: parsed.pluginName,
-        repo: parsed.repo,
-        enabledOnly: parsed.enabledOnly,
-      }))
-    );
+    const loaded = await source.load({
+      dir: parsed.dir,
+      pluginName: parsed.pluginName,
+      repo: parsed.repo,
+      enabledOnly: parsed.enabledOnly,
+    });
+    skippedNonAgentFiles += (loaded as AgentDef[] & { skippedNonAgentFiles?: number }).skippedNonAgentFiles ?? 0;
+    agents.push(...loaded);
   }
 
   const findings: Finding[] = [];
@@ -206,7 +208,7 @@ export async function main(argv: string[]): Promise<number> {
   const report: Report = {
     agents,
     findings,
-    meta: { sourceLabels: [...new Set(agents.map((a) => a.sourceLabel))] },
+    meta: { sourceLabels: [...new Set(agents.map((a) => a.sourceLabel))], skippedNonAgentFiles },
   };
 
   const output = renderer.render(report, { color: supportsColor() });

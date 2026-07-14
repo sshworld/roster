@@ -15,7 +15,10 @@ async function buildReport(): Promise<Report> {
   return {
     agents,
     findings,
-    meta: { sourceLabels: [...new Set(agents.map((a) => a.sourceLabel))] },
+    meta: {
+      sourceLabels: [...new Set(agents.map((a) => a.sourceLabel))],
+      skippedNonAgentFiles: (agents as unknown as { skippedNonAgentFiles?: number }).skippedNonAgentFiles ?? 0,
+    },
   };
 }
 

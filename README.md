@@ -233,8 +233,8 @@ upstream HEAD and pushes any changes straight to `main`.[^leaderboard-cron]
 | --- | --- | --- | --- | --- |
 | [affaan-m/ECC:agents](https://github.com/affaan-m/ECC) | 67 | swift-build-resolver <-> swift-reviewer (0.726) | 0.0% | ~3488 tokens/turn |
 | [contains-studio/agents](https://github.com/contains-studio/agents) | 32 | test-writer-fixer <-> test-results-analyzer (0.475) | 3.1% | ~8421 tokens/turn |
-| [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents) | 255 | Backend Architect (github:msitarzewski/agency-agents@9f3e401ccd09aa0ee0ef8e015226d0647908e01e) <-> Backend Architect (github:msitarzewski/agency-agents@9f3e401ccd09aa0ee0ef8e015226d0647908e01e) (0.879) | 93.3% | ~14024 tokens/turn |
-| [wshobson/agents](https://github.com/wshobson/agents) | 199 | api-scaffolding-backend-architect <-> backend-api-security-backend-architect (1.000) | 92.5% | ~14041 tokens/turn |
+| [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents) | 264 | Backend Architect (github:msitarzewski/agency-agents@459dce837db3bdfdc4763d3fefd1fd854e73c8f1) <-> Backend Architect (github:msitarzewski/agency-agents@459dce837db3bdfdc4763d3fefd1fd854e73c8f1) (0.877) | 93.6% | ~14627 tokens/turn |
+| [wshobson/agents](https://github.com/wshobson/agents) | 204 | api-scaffolding-graphql-architect <-> backend-development-graphql-architect (1.000) | 92.6% | ~14331 tokens/turn |
 <!-- bench:end -->
 
 [^leaderboard-cron]: Runs every Monday via `.github/workflows/leaderboard.yml`.

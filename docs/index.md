@@ -21,6 +21,21 @@ context in production.
 npm i -g roster-cli
 ```
 
+## Commands
+
+One binary, four commands — `audit`, `doccheck`, `usage`, `warn`. Full flag
+reference: [README](https://github.com/sshworld/roster#usage).
+
+- `roster audit <dir>` — overlap, harness, routing, and cost findings for a
+  roster.
+- `roster doccheck README.md` — flags markdown code-block commands that
+  would fail if copy-pasted.
+- `roster usage --days 14` — joins Claude Code transcript history to surface
+  unused agents and ghost invocations.
+- `roster warn --name <invoked>` — checks one agent/skill name for overlap
+  against the rest of the roster; also runs as a `PostToolUse` hook,
+  advisory only.
+
 ## Repo
 
 [github.com/sshworld/roster](https://github.com/sshworld/roster)

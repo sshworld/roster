@@ -54,6 +54,16 @@ Once installed:
   Claude's session context along with a relay directive, so Claude surfaces
   it to you in its first response of the session. Advisory only — never
   blocks a session.
+- **`roster-warn.sh` hook** (`PostToolUse`) — right after Claude invokes an
+  agent (`Task`/`Agent` tool) or a skill (`Skill` tool), scores the TF-IDF
+  overlap between the just-invoked name and every sibling already in the
+  roster; above threshold (default 0.7 for the hook, 0.6 for the standalone
+  CLI — `--above` overrides either), it injects a short advisory into
+  Claude's session context, same relay pattern as the drift hook. Deduped
+  per name per session (a marker file under
+  `~/.cache/roster/warn-seen-<session>/`), so a repeatedly-invoked agent
+  only warns once. `ROSTER_WARN_DISABLE=1` opts out entirely. Advisory
+  only — never blocks the tool call.
 
 ### Standalone CLI
 
@@ -69,10 +79,12 @@ npx roster-cli audit <dir>
 
 ## Usage
 
-roster is one binary with three commands: `audit`, `doccheck`, and `usage`.
-The plugin wraps `audit` and `usage` as the `/roster-audit` and
+roster is one binary with four commands: `audit`, `doccheck`, `usage`, and
+`warn`. The plugin wraps `audit` and `usage` as the `/roster-audit` and
 `/roster-usage` skills, and adds `/roster-cleanup` — a skill-only
-interactive workflow built on top of both. `doccheck` is CLI-only.
+interactive workflow built on top of both. `doccheck` is CLI-only. `warn`
+is wired as the `roster-warn.sh` `PostToolUse` hook above, plus available
+standalone.
 
 ```sh
 roster audit <dir>
@@ -82,6 +94,7 @@ roster audit <dir> --html report.html
 roster audit --plugin --enabled-only
 roster doccheck README.md
 roster usage --days 14 --user
+roster warn --name my-agent
 ```
 
 Full flag surface for `audit`:
@@ -209,6 +222,38 @@ the uninstall-candidate judgement — listed separately as
 `No agents (usage unknown): ...`).
 
 Always exits `0` — this is a reporting tool, not a gate.
+
+## warn
+
+```sh
+roster warn --name my-agent
+roster warn --name plugin:my-skill --kind skill --above 0.5
+roster warn --hook   # reads a PostToolUse payload from stdin instead
+```
+
+Standalone entry point for the same overlap check the `roster-warn.sh`
+`PostToolUse` hook runs above: scores TF-IDF cosine similarity between
+`--name` and every other agent/skill in the roster, and reports siblings
+scoring at or above `--above` (default `0.6`; the hook itself defaults to
+`0.7`). `--kind` restricts matching to `agent` or `skill`.
+
+```
+roster warn --name code-reviewer
+[roster warn] 'code-reviewer' overlaps with 2 sibling(s):
+  - pr-reviewer (agent, dir:.claude/agents) score=0.812
+  - security-reviewer (agent, user) score=0.734
+```
+
+**Limits:**
+- Only `Task`/`Agent` tool calls (subagents) and `Skill` tool calls are
+  observed by the hook — a slash command that never routes through the
+  `Skill` tool produces no advisory either way.
+- A skill is vectorized as `name + description` only (a `SKILL.md` body is
+  boilerplate, not signal); an agent is vectorized as `description + body`,
+  matching `roster audit`'s own overlap rule. Because of that asymmetry,
+  `warn` scores are not directly comparable to `audit`'s overlap scores.
+- Advisory only — `warn` never blocks, retries, or modifies the tool call
+  it fires after.
 
 ## Rules
 

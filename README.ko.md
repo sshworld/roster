@@ -168,6 +168,23 @@ roster warn --name code-reviewer
 - 스킬은 `name + description` 만으로 벡터화됩니다(`SKILL.md` 본문은 신호가 아니라 상투구이므로); 에이전트는 `description + body` 로 벡터화됩니다 — `roster audit` 자체의 overlap 규칙과 동일합니다. 이 비대칭 때문에 `warn` 점수는 `audit` 의 overlap 점수와 직접 비교할 수 없습니다.
 - 권고 전용 — `warn` 은 자신이 뒤따르는 툴 호출을 절대 막거나, 재시도하거나, 변경하지 않습니다.
 
+**기본은 침묵 — 그게 정상입니다.** 건강한 로스터는 경고를 만들지 않습니다: 보통의 구성에서 형제 항목 최고 점수는 훅 임계값 `0.7` 에 한참 못 미치므로, 조용하다는 것은 "위험한 겹침 없음"이지 "훅 고장"이 아닙니다. 내 로스터의 실제 점수가 궁금하면 기준을 낮춰 보세요:
+
+```sh
+roster warn --name <에이전트-또는-plugin:스킬> --above 0.1 --json
+```
+
+훅이 끝까지 발화하는 모습을 직접 보려면, 경고할 거리를 만들어 주면 됩니다 — 스크래치 프로젝트에 근사 중복 에이전트 두 개:
+
+```sh
+mkdir -p /tmp/warn-demo/.claude/agents && cd /tmp/warn-demo
+printf -- '---\nname: deploy-helper\ndescription: Deploys the app to production kubernetes, checks rollout status, rolls back on failure, notifies the team channel\n---\nProduction deploy workflow.\n' > .claude/agents/deploy-helper.md
+sed 's/deploy-helper/release-deployer/' .claude/agents/deploy-helper.md > .claude/agents/release-deployer.md
+claude   # 세션 안에서 deploy-helper 서브에이전트를 호출해 보세요
+```
+
+툴 결과 아래에 `PostToolUse:Agent says: [roster] 'deploy-helper' overlaps with: release-deployer (0.89)` 줄이 나타납니다. 경고가 없더라도 `~/.cache/roster/warn-seen-<세션>/` 아래 마커 파일이 호출된 이름마다 훅이 실제로 실행됐음을 증명합니다.
+
 ## 규칙
 
 | 규칙 | 설명 | 상태 |

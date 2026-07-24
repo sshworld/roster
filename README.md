@@ -255,6 +255,30 @@ roster warn --name code-reviewer
 - Advisory only — `warn` never blocks, retries, or modifies the tool call
   it fires after.
 
+**Quiet by default — that's the point.** A healthy roster produces no
+warnings: in typical setups the highest sibling scores sit far below the
+hook's `0.7` threshold, so silence means "no risky overlap", not "the hook
+is broken". To check what your roster actually scores, lower the bar:
+
+```sh
+roster warn --name <your-agent-or-plugin:skill> --above 0.1 --json
+```
+
+To watch the hook fire end-to-end, give it something to warn about — two
+near-duplicate agents in a scratch project:
+
+```sh
+mkdir -p /tmp/warn-demo/.claude/agents && cd /tmp/warn-demo
+printf -- '---\nname: deploy-helper\ndescription: Deploys the app to production kubernetes, checks rollout status, rolls back on failure, notifies the team channel\n---\nProduction deploy workflow.\n' > .claude/agents/deploy-helper.md
+sed 's/deploy-helper/release-deployer/' .claude/agents/deploy-helper.md > .claude/agents/release-deployer.md
+claude   # then ask it to invoke the deploy-helper subagent
+```
+
+The tool result gains a `PostToolUse:Agent says: [roster] 'deploy-helper'
+overlaps with: release-deployer (0.89)` line. Even when no warning fires,
+marker files under `~/.cache/roster/warn-seen-<session>/` prove the hook
+ran for each invoked name.
+
 ## Rules
 
 | Rule | Description | Status |

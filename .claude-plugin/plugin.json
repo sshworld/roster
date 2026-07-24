@@ -17,6 +17,17 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Task|Agent|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/roster-warn.sh"
+          }
+        ]
+      }
     ]
   }
 }

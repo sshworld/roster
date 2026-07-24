@@ -55,6 +55,11 @@ describe('loadPluginSkills', () => {
     expect(skills[0].kind).toBe('skill');
     expect(skills[0].sourceLabel).toBe('plugin:demo@1.0.0');
   });
+
+  it('sets pluginName on plugin-scope skills so namespaced <plugin>:<name> matching works', async () => {
+    const skills = await loadPluginSkills({ home: homeDir });
+    expect(skills[0].pluginName).toBe('demo');
+  });
 });
 
 describe('loadProjectSkills', () => {

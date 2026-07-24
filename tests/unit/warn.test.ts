@@ -54,6 +54,33 @@ describe('warn', () => {
     await mkdir(pluginAgentsDir, { recursive: true });
     await writeAgent(pluginAgentsDir, 'planner-a.md', 'planner-a', TEXT_1_DESC, TEXT_1_BODY);
 
+    const pluginSkillADir = path.join(
+      home,
+      '.claude',
+      'plugins',
+      'cache',
+      'marketplace-a',
+      'demo',
+      '1.0.0',
+      'skills',
+      'plugin-skill-a'
+    );
+    const pluginSkillBDir = path.join(
+      home,
+      '.claude',
+      'plugins',
+      'cache',
+      'marketplace-a',
+      'demo',
+      '1.0.0',
+      'skills',
+      'plugin-skill-b'
+    );
+    await mkdir(pluginSkillADir, { recursive: true });
+    await mkdir(pluginSkillBDir, { recursive: true });
+    await writeAgent(pluginSkillADir, 'SKILL.md', 'plugin-skill-a', TEXT_1_DESC, SHARED_BOILERPLATE);
+    await writeAgent(pluginSkillBDir, 'SKILL.md', 'plugin-skill-b', TEXT_1_DESC, SHARED_BOILERPLATE);
+
     await mkdir(path.join(home, '.claude', 'plugins'), { recursive: true });
     await writeFile(
       path.join(home, '.claude', 'plugins', 'installed_plugins.json'),
@@ -125,6 +152,15 @@ describe('warn', () => {
       expect(code).toBe(0);
       const output = JSON.parse(logSpy.mock.calls[0][0] as string);
       expect(output.target.sourceLabel).toBe('plugin:demo@1.0.0');
+    });
+
+    it('resolves a plugin:name namespaced name to a plugin-scoped skill and reports its sibling', async () => {
+      const code = await run(['--name', 'demo:plugin-skill-a', '--json'], { home, cwd: emptyCwd });
+      expect(code).toBe(0);
+      const output = JSON.parse(logSpy.mock.calls[0][0] as string);
+      expect(output.target.sourceLabel).toBe('plugin:demo@1.0.0');
+      const siblingNames = output.siblings.map((s: { name: string }) => s.name);
+      expect(siblingNames).toContain('plugin-skill-b');
     });
 
     it('excludes documents under the min-token guard from comparison, even when textually identical', async () => {

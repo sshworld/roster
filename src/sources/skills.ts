@@ -53,9 +53,13 @@ export async function loadUserSkills(opts?: RosterSourceLoadOptions): Promise<Ag
 export async function loadPluginSkills(opts?: RosterSourceLoadOptions): Promise<AgentDef[]> {
   const activePlugins = await listActivePlugins(opts);
   const lists = await Promise.all(
-    activePlugins.map((plugin) =>
-      loadSkillsFromDir(path.join(plugin.installPath, 'skills'), `plugin:${plugin.name}@${plugin.version}`)
-    )
+    activePlugins.map(async (plugin) => {
+      const skills = await loadSkillsFromDir(
+        path.join(plugin.installPath, 'skills'),
+        `plugin:${plugin.name}@${plugin.version}`
+      );
+      return skills.map((skill) => ({ ...skill, pluginName: plugin.name }));
+    })
   );
   return lists.flat();
 }

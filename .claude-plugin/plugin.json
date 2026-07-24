@@ -1,6 +1,6 @@
 {
   "name": "roster",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Static auditor for Claude Code agent rosters — overlap, harness gaps, routing, cost — with a resident drift guard.",
   "author": {
     "name": "sshworld",

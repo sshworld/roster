@@ -2,14 +2,14 @@ import type { AgentDef, Finding, Rule } from '../core/types.js';
 
 const DEFAULT_TOP = 10;
 
-function tokenize(text: string): string[] {
+export function tokenize(text: string): string[] {
   return text
     .toLowerCase()
     .split(/[^a-z0-9]+/)
     .filter(Boolean);
 }
 
-function buildVectors(docs: string[][]): Map<string, number>[] {
+export function buildVectors(docs: string[][]): Map<string, number>[] {
   const documentFrequency = new Map<string, number>();
   for (const doc of docs) {
     for (const term of new Set(doc)) {
@@ -38,13 +38,13 @@ function buildVectors(docs: string[][]): Map<string, number>[] {
   });
 }
 
-function norm(vector: Map<string, number>): number {
+export function norm(vector: Map<string, number>): number {
   let sumSquares = 0;
   for (const weight of vector.values()) sumSquares += weight * weight;
   return Math.sqrt(sumSquares);
 }
 
-function dotProduct(a: Map<string, number>, b: Map<string, number>): number {
+export function dotProduct(a: Map<string, number>, b: Map<string, number>): number {
   const [small, large] = a.size <= b.size ? [a, b] : [b, a];
   let dot = 0;
   for (const [term, weight] of small) {

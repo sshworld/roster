@@ -8,6 +8,7 @@ import { renderers } from './render/index.js';
 import { run as runDoccheck } from './doccheck.js';
 import { run as runUsage } from './usage.js';
 import { run as runMcp } from './mcp.js';
+import { run as runWarn } from './warn.js';
 import { supportsColor } from './render/ansi.js';
 
 interface ParsedArgs {
@@ -31,6 +32,7 @@ Commands:
   audit                       Audit a roster for overlaps and issues
   doccheck                    Check docs for drift
   usage                       Report agent usage stats
+  warn                        Warn when an invoked agent/skill overlaps with a sibling
   mcp                         Run an MCP server on stdio
 
 Options:
@@ -129,6 +131,7 @@ export async function main(argv: string[]): Promise<number> {
   const [cmd, ...rest] = argv;
   if (cmd === 'doccheck') return runDoccheck(rest);
   if (cmd === 'usage') return runUsage(rest);
+  if (cmd === 'warn') return runWarn(rest);
   if (cmd === 'mcp') return runMcp(rest);
   if (cmd !== 'audit') {
     console.error(`unknown command: ${cmd}`);

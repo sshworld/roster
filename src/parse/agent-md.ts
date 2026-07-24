@@ -190,3 +190,16 @@ export function parseAgentMarkdown(raw: string, filePath: string, sourceLabel: s
     filePath,
   };
 }
+
+/**
+ * Parses a SKILL.md file into an AgentDef with kind: 'skill', reusing
+ * parseAgentMarkdown for the actual field extraction. Unlike agent parsing,
+ * a missing `name` frontmatter key is not backfilled from the filename —
+ * SKILL.md with no declared name is skipped entirely (returns undefined).
+ */
+export function parseSkillMarkdown(raw: string, filePath: string, sourceLabel: string): AgentDef | undefined {
+  const { frontmatter } = splitFrontmatter(raw);
+  if (!frontmatter.name?.trim()) return undefined;
+
+  return { ...parseAgentMarkdown(raw, filePath, sourceLabel), kind: 'skill' };
+}

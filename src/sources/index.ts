@@ -12,3 +12,7 @@ export const sources: Record<string, RegisteredSource> = {
   'plugin-cache': pluginCacheSource,
   github: githubSource,
 };
+
+// Skill loaders (kind: 'skill') are intentionally NOT part of the `sources`
+// registry above — the audit/bench default path only ever ingests agents.
+export { loadUserSkills, loadPluginSkills, loadProjectSkills } from './skills.js';

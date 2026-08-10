@@ -302,7 +302,7 @@ upstream HEAD and pushes any changes straight to `main`.[^leaderboard-cron]
 | --- | --- | --- | --- | --- |
 | [affaan-m/ECC:agents](https://github.com/affaan-m/ECC) | 67 | swift-build-resolver <-> swift-reviewer (0.726) | 0.0% | ~3488 tokens/turn |
 | [contains-studio/agents](https://github.com/contains-studio/agents) | 32 | test-writer-fixer <-> test-results-analyzer (0.475) | 3.1% | ~8421 tokens/turn |
-| [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents) | 271 | Backend Architect (github:msitarzewski/agency-agents@c89557f78509868c6d4cc08e5cbc79bc8625fe1c) <-> Backend Architect (github:msitarzewski/agency-agents@c89557f78509868c6d4cc08e5cbc79bc8625fe1c) (0.877) | 93.7% | ~15000 tokens/turn |
+| [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents) | 271 | Backend Architect (github:msitarzewski/agency-agents@ebe9c99acb5c96f9468de368d8bead775387d1a7) <-> Backend Architect (github:msitarzewski/agency-agents@ebe9c99acb5c96f9468de368d8bead775387d1a7) (0.877) | 93.7% | ~15000 tokens/turn |
 | [wshobson/agents](https://github.com/wshobson/agents) | 204 | api-scaffolding-graphql-architect <-> backend-development-graphql-architect (1.000) | 92.6% | ~14331 tokens/turn |
 <!-- bench:end -->
 

@@ -1,13 +1,13 @@
 # Benchmark — wshobson/agents
 
 - **Repo**: [wshobson/agents](https://github.com/wshobson/agents)
-- **Pinned SHA**: `38e19c20d2b154510b0e624a2e3e186b19b5c527`
-- **Generated**: 2026-08-31
+- **Pinned SHA**: `a30778f8c4e6b0a87567941b7cca4f534bf642b6`
+- **Generated**: 2026-09-07
 
 ## Summary
 
 - Agents scanned: **202**
-- Top overlap pair (of top 15): **backend-api-security-backend-security-coder <-> data-validation-suite-backend-security-coder (1.000)**
+- Top overlap pair (of top 15): **api-scaffolding-backend-architect <-> backend-api-security-backend-architect (1.000)**
 - No-harness agents (no tool restriction / wildcard tools): **188** (93.1% of roster)
 - Roster fixed cost estimate: **~14256 tokens/turn**
 - Total findings: **804**
@@ -16,28 +16,28 @@
 
 | Agent A | Agent B | Similarity |
 | --- | --- | --- |
-| backend-api-security-backend-security-coder | data-validation-suite-backend-security-coder | 1.000 |
-| debugging-toolkit-dx-optimizer | team-collaboration-dx-optimizer | 1.000 |
-| agent-orchestration-context-manager | context-management-context-manager | 1.000 |
 | api-scaffolding-backend-architect | backend-api-security-backend-architect | 1.000 |
 | api-scaffolding-backend-architect | backend-development-backend-architect | 1.000 |
 | api-scaffolding-backend-architect | data-engineering-backend-architect | 1.000 |
 | api-scaffolding-backend-architect | database-cloud-optimization-backend-architect | 1.000 |
 | api-scaffolding-backend-architect | multi-platform-apps-backend-architect | 1.000 |
-| api-scaffolding-fastapi-pro | python-development-fastapi-pro | 1.000 |
 | api-testing-observability-api-documenter | documentation-generation-api-documenter | 1.000 |
-| application-performance-frontend-developer | frontend-mobile-development-frontend-developer | 1.000 |
-| application-performance-frontend-developer | frontend-mobile-security-frontend-developer | 1.000 |
-| application-performance-frontend-developer | multi-platform-apps-frontend-developer | 1.000 |
 | application-performance-performance-engineer | full-stack-orchestration-performance-engineer | 1.000 |
 | application-performance-performance-engineer | observability-monitoring-performance-engineer | 1.000 |
+| application-performance-performance-engineer | performance-testing-review-performance-engineer | 1.000 |
+| backend-api-security-backend-architect | backend-development-backend-architect | 1.000 |
+| backend-api-security-backend-architect | data-engineering-backend-architect | 1.000 |
+| backend-api-security-backend-architect | database-cloud-optimization-backend-architect | 1.000 |
+| backend-api-security-backend-architect | multi-platform-apps-backend-architect | 1.000 |
+| backend-development-backend-architect | data-engineering-backend-architect | 1.000 |
+| backend-development-backend-architect | database-cloud-optimization-backend-architect | 1.000 |
 
 ## Reproduce
 
 ```sh
 npm run build
-node dist/cli.js audit --repo wshobson/agents@38e19c20d2b154510b0e624a2e3e186b19b5c527 --no-fail --top 15 --json
-node dist/cli.js audit --repo wshobson/agents@38e19c20d2b154510b0e624a2e3e186b19b5c527 --no-fail --top 15
+node dist/cli.js audit --repo wshobson/agents@a30778f8c4e6b0a87567941b7cca4f534bf642b6 --no-fail --top 15 --json
+node dist/cli.js audit --repo wshobson/agents@a30778f8c4e6b0a87567941b7cca4f534bf642b6 --no-fail --top 15
 ```
 
 ## CLI output
@@ -45,24 +45,24 @@ node dist/cli.js audit --repo wshobson/agents@38e19c20d2b154510b0e624a2e3e186b19
 ```
 Roster Audit Report
 Agents scanned: 202
-Sources: github:wshobson/agents@38e19c20d2b154510b0e624a2e3e186b19b5c527
+Sources: github:wshobson/agents@a30778f8c4e6b0a87567941b7cca4f534bf642b6
 
 Top overlapping pairs (15):
-  1.000  backend-api-security-backend-security-coder <-> data-validation-suite-backend-security-coder
-  1.000  debugging-toolkit-dx-optimizer <-> team-collaboration-dx-optimizer
-  1.000  agent-orchestration-context-manager <-> context-management-context-manager
   1.000  api-scaffolding-backend-architect <-> backend-api-security-backend-architect
   1.000  api-scaffolding-backend-architect <-> backend-development-backend-architect
   1.000  api-scaffolding-backend-architect <-> data-engineering-backend-architect
   1.000  api-scaffolding-backend-architect <-> database-cloud-optimization-backend-architect
   1.000  api-scaffolding-backend-architect <-> multi-platform-apps-backend-architect
-  1.000  api-scaffolding-fastapi-pro <-> python-development-fastapi-pro
   1.000  api-testing-observability-api-documenter <-> documentation-generation-api-documenter
-  1.000  application-performance-frontend-developer <-> frontend-mobile-development-frontend-developer
-  1.000  application-performance-frontend-developer <-> frontend-mobile-security-frontend-developer
-  1.000  application-performance-frontend-developer <-> multi-platform-apps-frontend-developer
   1.000  application-performance-performance-engineer <-> full-stack-orchestration-performance-engineer
   1.000  application-performance-performance-engineer <-> observability-monitoring-performance-engineer
+  1.000  application-performance-performance-engineer <-> performance-testing-review-performance-engineer
+  1.000  backend-api-security-backend-architect <-> backend-development-backend-architect
+  1.000  backend-api-security-backend-architect <-> data-engineering-backend-architect
+  1.000  backend-api-security-backend-architect <-> database-cloud-optimization-backend-architect
+  1.000  backend-api-security-backend-architect <-> multi-platform-apps-backend-architect
+  1.000  backend-development-backend-architect <-> data-engineering-backend-architect
+  1.000  backend-development-backend-architect <-> database-cloud-optimization-backend-architect
 
 Findings: 804 total (0 critical, 188 warning)
 ```

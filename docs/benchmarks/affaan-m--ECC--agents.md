@@ -1,8 +1,8 @@
 # Benchmark — affaan-m/ECC:agents
 
 - **Repo**: [affaan-m/ECC:agents](https://github.com/affaan-m/ECC)
-- **Pinned SHA**: `2b6e839771e53096d8451a213d40dc64ec8acac0`
-- **Generated**: 2026-09-21
+- **Pinned SHA**: `d3b8a3e908904e242ed2dbe66af62cca71131419`
+- **Generated**: 2026-09-28
 
 ## Summary
 
@@ -36,8 +36,8 @@
 
 ```sh
 npm run build
-node dist/cli.js audit --repo affaan-m/ECC@2b6e839771e53096d8451a213d40dc64ec8acac0:agents --no-fail --top 15 --json
-node dist/cli.js audit --repo affaan-m/ECC@2b6e839771e53096d8451a213d40dc64ec8acac0:agents --no-fail --top 15
+node dist/cli.js audit --repo affaan-m/ECC@d3b8a3e908904e242ed2dbe66af62cca71131419:agents --no-fail --top 15 --json
+node dist/cli.js audit --repo affaan-m/ECC@d3b8a3e908904e242ed2dbe66af62cca71131419:agents --no-fail --top 15
 ```
 
 ## CLI output
@@ -45,7 +45,7 @@ node dist/cli.js audit --repo affaan-m/ECC@2b6e839771e53096d8451a213d40dc64ec8ac
 ```
 Roster Audit Report
 Agents scanned: 68
-Sources: github:affaan-m/ECC@2b6e839771e53096d8451a213d40dc64ec8acac0:agents
+Sources: github:affaan-m/ECC@d3b8a3e908904e242ed2dbe66af62cca71131419:agents
 
 Top overlapping pairs (15):
   0.727  swift-build-resolver <-> swift-reviewer

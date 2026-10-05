@@ -1,13 +1,13 @@
 # Benchmark — affaan-m/ECC:agents
 
 - **Repo**: [affaan-m/ECC:agents](https://github.com/affaan-m/ECC)
-- **Pinned SHA**: `d3b8a3e908904e242ed2dbe66af62cca71131419`
-- **Generated**: 2026-09-28
+- **Pinned SHA**: `ef648e01899ba3e8dc6371642deaaf64b4477775`
+- **Generated**: 2026-10-05
 
 ## Summary
 
 - Agents scanned: **68**
-- Top overlap pair (of top 15): **swift-build-resolver <-> swift-reviewer (0.727)**
+- Top overlap pair (of top 15): **swift-build-resolver <-> swift-reviewer (0.726)**
 - No-harness agents (no tool restriction / wildcard tools): **0** (0.0% of roster)
 - Roster fixed cost estimate: **~3569 tokens/turn**
 - Total findings: **198**
@@ -16,7 +16,7 @@
 
 | Agent A | Agent B | Similarity |
 | --- | --- | --- |
-| swift-build-resolver | swift-reviewer | 0.727 |
+| swift-build-resolver | swift-reviewer | 0.726 |
 | opensource-forker | opensource-sanitizer | 0.718 |
 | react-build-resolver | react-reviewer | 0.675 |
 | java-build-resolver | java-reviewer | 0.642 |
@@ -27,7 +27,7 @@
 | code-reviewer | typescript-reviewer | 0.510 |
 | gan-evaluator | gan-generator | 0.506 |
 | django-build-resolver | django-reviewer | 0.493 |
-| build-error-resolver | cpp-build-resolver | 0.448 |
+| build-error-resolver | cpp-build-resolver | 0.447 |
 | homelab-architect | network-architect | 0.444 |
 | django-reviewer | python-reviewer | 0.442 |
 | fsharp-reviewer | python-reviewer | 0.431 |
@@ -36,8 +36,8 @@
 
 ```sh
 npm run build
-node dist/cli.js audit --repo affaan-m/ECC@d3b8a3e908904e242ed2dbe66af62cca71131419:agents --no-fail --top 15 --json
-node dist/cli.js audit --repo affaan-m/ECC@d3b8a3e908904e242ed2dbe66af62cca71131419:agents --no-fail --top 15
+node dist/cli.js audit --repo affaan-m/ECC@ef648e01899ba3e8dc6371642deaaf64b4477775:agents --no-fail --top 15 --json
+node dist/cli.js audit --repo affaan-m/ECC@ef648e01899ba3e8dc6371642deaaf64b4477775:agents --no-fail --top 15
 ```
 
 ## CLI output
@@ -45,10 +45,10 @@ node dist/cli.js audit --repo affaan-m/ECC@d3b8a3e908904e242ed2dbe66af62cca71131
 ```
 Roster Audit Report
 Agents scanned: 68
-Sources: github:affaan-m/ECC@d3b8a3e908904e242ed2dbe66af62cca71131419:agents
+Sources: github:affaan-m/ECC@ef648e01899ba3e8dc6371642deaaf64b4477775:agents
 
 Top overlapping pairs (15):
-  0.727  swift-build-resolver <-> swift-reviewer
+  0.726  swift-build-resolver <-> swift-reviewer
   0.718  opensource-forker <-> opensource-sanitizer
   0.675  react-build-resolver <-> react-reviewer
   0.642  java-build-resolver <-> java-reviewer
@@ -59,7 +59,7 @@ Top overlapping pairs (15):
   0.510  code-reviewer <-> typescript-reviewer
   0.506  gan-evaluator <-> gan-generator
   0.493  django-build-resolver <-> django-reviewer
-  0.448  build-error-resolver <-> cpp-build-resolver
+  0.447  build-error-resolver <-> cpp-build-resolver
   0.444  homelab-architect <-> network-architect
   0.442  django-reviewer <-> python-reviewer
   0.431  fsharp-reviewer <-> python-reviewer

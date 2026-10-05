@@ -300,9 +300,9 @@ upstream HEAD and pushes any changes straight to `main`.[^leaderboard-cron]
 <!-- bench:start -->
 | Repo | Agents | Top overlap pair | No-tools % | Fixed cost |
 | --- | --- | --- | --- | --- |
-| [affaan-m/ECC:agents](https://github.com/affaan-m/ECC) | 68 | swift-build-resolver <-> swift-reviewer (0.727) | 0.0% | ~3569 tokens/turn |
+| [affaan-m/ECC:agents](https://github.com/affaan-m/ECC) | 68 | swift-build-resolver <-> swift-reviewer (0.726) | 0.0% | ~3569 tokens/turn |
 | [contains-studio/agents](https://github.com/contains-studio/agents) | 32 | test-writer-fixer <-> test-results-analyzer (0.475) | 3.1% | ~8421 tokens/turn |
-| [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents) | 280 | Backend Architect (github:msitarzewski/agency-agents@479193dcce1cf6432ce0f5aa230ab8cc739a8c6b) <-> Backend Architect (github:msitarzewski/agency-agents@479193dcce1cf6432ce0f5aa230ab8cc739a8c6b) (0.877) | 93.9% | ~15519 tokens/turn |
+| [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents) | 283 | Backend Architect (github:msitarzewski/agency-agents@83294689da3832c0a9f223221148c411fd3eacc0) <-> Backend Architect (github:msitarzewski/agency-agents@83294689da3832c0a9f223221148c411fd3eacc0) (0.872) | 94.0% | ~15670 tokens/turn |
 | [wshobson/agents](https://github.com/wshobson/agents) | 202 | api-scaffolding-backend-architect <-> backend-api-security-backend-architect (1.000) | 93.1% | ~14253 tokens/turn |
 <!-- bench:end -->
 

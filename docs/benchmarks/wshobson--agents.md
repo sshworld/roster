@@ -2,7 +2,7 @@
 
 - **Repo**: [wshobson/agents](https://github.com/wshobson/agents)
 - **Pinned SHA**: `46891e7e60da0e52baf1050b7b6391b64e84c6d9`
-- **Generated**: 2026-10-05
+- **Generated**: 2026-10-12
 
 ## Summary
 

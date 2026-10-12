@@ -1,13 +1,13 @@
 # Benchmark — msitarzewski/agency-agents
 
 - **Repo**: [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)
-- **Pinned SHA**: `83294689da3832c0a9f223221148c411fd3eacc0`
-- **Generated**: 2026-10-05
+- **Pinned SHA**: `f99f6aa910a442b0197b768ce0ea7751e35e2060`
+- **Generated**: 2026-10-12
 
 ## Summary
 
 - Agents scanned: **283**
-- Top overlap pair (of top 15): **Backend Architect (github:msitarzewski/agency-agents@83294689da3832c0a9f223221148c411fd3eacc0) <-> Backend Architect (github:msitarzewski/agency-agents@83294689da3832c0a9f223221148c411fd3eacc0) (0.872)**
+- Top overlap pair (of top 15): **Backend Architect (github:msitarzewski/agency-agents@f99f6aa910a442b0197b768ce0ea7751e35e2060) <-> Backend Architect (github:msitarzewski/agency-agents@f99f6aa910a442b0197b768ce0ea7751e35e2060) (0.872)**
 - No-harness agents (no tool restriction / wildcard tools): **266** (94.0% of roster)
 - Roster fixed cost estimate: **~15670 tokens/turn**
 - Total findings: **1130**
@@ -16,7 +16,7 @@
 
 | Agent A | Agent B | Similarity |
 | --- | --- | --- |
-| Backend Architect (github:msitarzewski/agency-agents@83294689da3832c0a9f223221148c411fd3eacc0) | Backend Architect (github:msitarzewski/agency-agents@83294689da3832c0a9f223221148c411fd3eacc0) | 0.872 |
+| Backend Architect (github:msitarzewski/agency-agents@f99f6aa910a442b0197b768ce0ea7751e35e2060) | Backend Architect (github:msitarzewski/agency-agents@f99f6aa910a442b0197b768ce0ea7751e35e2060) | 0.872 |
 | Evidence Collector | Reality Checker | 0.791 |
 | Drupal Shopping Cart Engineer | WordPress Shopping Cart Engineer | 0.676 |
 | Section 508 Accessibility Specialist | Accessibility Auditor | 0.661 |
@@ -36,8 +36,8 @@
 
 ```sh
 npm run build
-node dist/cli.js audit --repo msitarzewski/agency-agents@83294689da3832c0a9f223221148c411fd3eacc0 --no-fail --top 15 --json
-node dist/cli.js audit --repo msitarzewski/agency-agents@83294689da3832c0a9f223221148c411fd3eacc0 --no-fail --top 15
+node dist/cli.js audit --repo msitarzewski/agency-agents@f99f6aa910a442b0197b768ce0ea7751e35e2060 --no-fail --top 15 --json
+node dist/cli.js audit --repo msitarzewski/agency-agents@f99f6aa910a442b0197b768ce0ea7751e35e2060 --no-fail --top 15
 ```
 
 ## CLI output
@@ -45,10 +45,10 @@ node dist/cli.js audit --repo msitarzewski/agency-agents@83294689da3832c0a9f2232
 ```
 Roster Audit Report
 Agents scanned: 283
-Sources: github:msitarzewski/agency-agents@83294689da3832c0a9f223221148c411fd3eacc0
+Sources: github:msitarzewski/agency-agents@f99f6aa910a442b0197b768ce0ea7751e35e2060
 
 Top overlapping pairs (15):
-  0.872  Backend Architect (github:msitarzewski/agency-agents@83294689da3832c0a9f223221148c411fd3eacc0) <-> Backend Architect (github:msitarzewski/agency-agents@83294689da3832c0a9f223221148c411fd3eacc0)
+  0.872  Backend Architect (github:msitarzewski/agency-agents@f99f6aa910a442b0197b768ce0ea7751e35e2060) <-> Backend Architect (github:msitarzewski/agency-agents@f99f6aa910a442b0197b768ce0ea7751e35e2060)
   0.791  Evidence Collector <-> Reality Checker
   0.676  Drupal Shopping Cart Engineer <-> WordPress Shopping Cart Engineer
   0.661  Section 508 Accessibility Specialist <-> Accessibility Auditor

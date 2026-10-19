@@ -1,8 +1,8 @@
 # Benchmark — wshobson/agents
 
 - **Repo**: [wshobson/agents](https://github.com/wshobson/agents)
-- **Pinned SHA**: `46891e7e60da0e52baf1050b7b6391b64e84c6d9`
-- **Generated**: 2026-10-12
+- **Pinned SHA**: `0874a27b17a22e2b7c2e2bcd725768e0803cad06`
+- **Generated**: 2026-10-19
 
 ## Summary
 
@@ -36,8 +36,8 @@
 
 ```sh
 npm run build
-node dist/cli.js audit --repo wshobson/agents@46891e7e60da0e52baf1050b7b6391b64e84c6d9 --no-fail --top 15 --json
-node dist/cli.js audit --repo wshobson/agents@46891e7e60da0e52baf1050b7b6391b64e84c6d9 --no-fail --top 15
+node dist/cli.js audit --repo wshobson/agents@0874a27b17a22e2b7c2e2bcd725768e0803cad06 --no-fail --top 15 --json
+node dist/cli.js audit --repo wshobson/agents@0874a27b17a22e2b7c2e2bcd725768e0803cad06 --no-fail --top 15
 ```
 
 ## CLI output
@@ -45,7 +45,7 @@ node dist/cli.js audit --repo wshobson/agents@46891e7e60da0e52baf1050b7b6391b64e
 ```
 Roster Audit Report
 Agents scanned: 202
-Sources: github:wshobson/agents@46891e7e60da0e52baf1050b7b6391b64e84c6d9
+Sources: github:wshobson/agents@0874a27b17a22e2b7c2e2bcd725768e0803cad06
 
 Top overlapping pairs (15):
   1.000  api-scaffolding-backend-architect <-> backend-api-security-backend-architect

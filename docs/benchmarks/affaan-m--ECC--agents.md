@@ -1,8 +1,8 @@
 # Benchmark — affaan-m/ECC:agents
 
 - **Repo**: [affaan-m/ECC:agents](https://github.com/affaan-m/ECC)
-- **Pinned SHA**: `25278e7d7b6cf6e6a4e7a6c8e10f14ff22f0eb5b`
-- **Generated**: 2026-10-26
+- **Pinned SHA**: `b38be6a7f6350964d59328b52f0624e1d1d552d1`
+- **Generated**: 2026-11-02
 
 ## Summary
 
@@ -21,10 +21,10 @@
 | java-build-resolver | java-reviewer | 0.645 |
 | go-build-resolver | go-reviewer | 0.625 |
 | csharp-reviewer | fsharp-reviewer | 0.612 |
-| react-reviewer | typescript-reviewer | 0.574 |
+| react-reviewer | typescript-reviewer | 0.575 |
 | rust-build-resolver | rust-reviewer | 0.533 |
 | opensource-forker | opensource-sanitizer | 0.516 |
-| code-reviewer | typescript-reviewer | 0.510 |
+| code-reviewer | typescript-reviewer | 0.511 |
 | gan-evaluator | gan-generator | 0.508 |
 | django-build-resolver | django-reviewer | 0.494 |
 | build-error-resolver | cpp-build-resolver | 0.443 |
@@ -36,8 +36,8 @@
 
 ```sh
 npm run build
-node dist/cli.js audit --repo affaan-m/ECC@25278e7d7b6cf6e6a4e7a6c8e10f14ff22f0eb5b:agents --no-fail --top 15 --json
-node dist/cli.js audit --repo affaan-m/ECC@25278e7d7b6cf6e6a4e7a6c8e10f14ff22f0eb5b:agents --no-fail --top 15
+node dist/cli.js audit --repo affaan-m/ECC@b38be6a7f6350964d59328b52f0624e1d1d552d1:agents --no-fail --top 15 --json
+node dist/cli.js audit --repo affaan-m/ECC@b38be6a7f6350964d59328b52f0624e1d1d552d1:agents --no-fail --top 15
 ```
 
 ## CLI output
@@ -45,7 +45,7 @@ node dist/cli.js audit --repo affaan-m/ECC@25278e7d7b6cf6e6a4e7a6c8e10f14ff22f0e
 ```
 Roster Audit Report
 Agents scanned: 71
-Sources: github:affaan-m/ECC@25278e7d7b6cf6e6a4e7a6c8e10f14ff22f0eb5b:agents
+Sources: github:affaan-m/ECC@b38be6a7f6350964d59328b52f0624e1d1d552d1:agents
 
 Top overlapping pairs (15):
   0.730  swift-build-resolver <-> swift-reviewer
@@ -53,10 +53,10 @@ Top overlapping pairs (15):
   0.645  java-build-resolver <-> java-reviewer
   0.625  go-build-resolver <-> go-reviewer
   0.612  csharp-reviewer <-> fsharp-reviewer
-  0.574  react-reviewer <-> typescript-reviewer
+  0.575  react-reviewer <-> typescript-reviewer
   0.533  rust-build-resolver <-> rust-reviewer
   0.516  opensource-forker <-> opensource-sanitizer
-  0.510  code-reviewer <-> typescript-reviewer
+  0.511  code-reviewer <-> typescript-reviewer
   0.508  gan-evaluator <-> gan-generator
   0.494  django-build-resolver <-> django-reviewer
   0.443  build-error-resolver <-> cpp-build-resolver

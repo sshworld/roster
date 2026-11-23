@@ -2,7 +2,7 @@
 
 - **Repo**: [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents)
 - **Pinned SHA**: `8ae6164602c95ca78828b148b9052460ee426885`
-- **Generated**: 2026-11-16
+- **Generated**: 2026-11-23
 
 ## Summary
 

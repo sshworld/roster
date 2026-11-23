@@ -300,10 +300,10 @@ upstream HEAD and pushes any changes straight to `main`.[^leaderboard-cron]
 <!-- bench:start -->
 | Repo | Agents | Top overlap pair | No-tools % | Fixed cost |
 | --- | --- | --- | --- | --- |
-| [affaan-m/ECC:agents](https://github.com/affaan-m/ECC) | 71 | swift-build-resolver <-> swift-reviewer (0.730) | 0.0% | ~3728 tokens/turn |
+| [affaan-m/ECC:agents](https://github.com/affaan-m/ECC) | 72 | swift-build-resolver <-> swift-reviewer (0.732) | 0.0% | ~3782 tokens/turn |
 | [contains-studio/agents](https://github.com/contains-studio/agents) | 32 | test-writer-fixer <-> test-results-analyzer (0.475) | 3.1% | ~8421 tokens/turn |
 | [msitarzewski/agency-agents](https://github.com/msitarzewski/agency-agents) | 284 | Backend Architect (github:msitarzewski/agency-agents@8ae6164602c95ca78828b148b9052460ee426885) <-> Backend Architect (github:msitarzewski/agency-agents@8ae6164602c95ca78828b148b9052460ee426885) (0.871) | 94.0% | ~15777 tokens/turn |
-| [wshobson/agents](https://github.com/wshobson/agents) | 202 | api-scaffolding-backend-architect <-> backend-api-security-backend-architect (1.000) | 93.1% | ~14253 tokens/turn |
+| [wshobson/agents](https://github.com/wshobson/agents) | 199 | api-scaffolding-fastapi-pro <-> python-development-fastapi-pro (1.000) | 94.0% | ~14063 tokens/turn |
 <!-- bench:end -->
 
 [^leaderboard-cron]: Runs every Monday via `.github/workflows/leaderboard.yml`.
